@@ -1,8 +1,6 @@
-import 'package:wb_annatation/mqtt/wb_mqtt_client.dart';
+import 'package:wb_annatation/contracts/wb_mqtt_client.dart';
 
 abstract interface class IDevice {
-  WbMqttClient get mqtt;
-
   void execute();
 
   void init();
