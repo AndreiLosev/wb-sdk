@@ -38,9 +38,9 @@ class WbClient implements WbMqttClient {
   StreamSubscription<List<MqttReceivedMessage<MqttMessage>>>?
   _updatesSubscription;
 
-  WbClient getInstanse() {
+  static WbClient getInstanse() {
     if (_instanse == null) {
-      throw Exception("$runtimeType must be initialized");
+      throw Exception("WbClient must be initialized");
     }
 
     return _instanse!;
