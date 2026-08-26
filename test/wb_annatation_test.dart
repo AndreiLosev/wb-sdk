@@ -14,6 +14,8 @@ void main() {
     expect(WbMetaJson, isNotNull);
     expect(WbNumericBounds, isNotNull);
     expect(WbMqttClient, isNotNull);
+    expect(WbStorage, isNotNull);
+    expect(WbHiveStorage, isNotNull);
     expect(IDevice, isNotNull);
   });
 }
