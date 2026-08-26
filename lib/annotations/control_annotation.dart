@@ -13,7 +13,6 @@ class ControlAnnotation {
     this.min,
     this.max,
     this.precision,
-    this.order,
     this.readonly = false,
     this.hidden = false,
     this.enumTitles,
@@ -42,9 +41,6 @@ class ControlAnnotation {
   /// Точность значения (`meta.precision`).
   final double? precision;
 
-  /// Порядок отображения в UI (`meta.order`).
-  final int? order;
-
   /// Контрол только для чтения, без `/on` топика (`meta.readonly`).
   final bool readonly;
 
@@ -52,5 +48,5 @@ class ControlAnnotation {
   final bool hidden;
 
   /// Заголовки значений enum (`meta.enum`). Для [WbControlType.value] и [WbControlType.text].
-  final Map<String, Map<String, String>>? enumTitles;
+  final Map<String, WbLocalizedTitle>? enumTitles;
 }

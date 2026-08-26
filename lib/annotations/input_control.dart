@@ -4,7 +4,7 @@ import 'control_annotation.dart';
 
 /// Входной контрол: поле получает значение из MQTT.
 ///
-/// Генератор подписывается на `{name}/{control}`.
+/// Генератор подписывается на `{name}/{control}/on`.
 @Target({TargetKind.field})
 class InputControl extends ControlAnnotation {
   const InputControl({
@@ -15,7 +15,6 @@ class InputControl extends ControlAnnotation {
     super.min,
     super.max,
     super.precision,
-    super.order,
     super.readonly = false,
     super.hidden = false,
     super.enumTitles,

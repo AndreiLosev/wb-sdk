@@ -11,6 +11,8 @@ void main() {
     expect(WbLocalizedTitle, isNotNull);
     expect(WbUnits, isNotNull);
     expect(WbValueCodec, isNotNull);
+    expect(WbMetaJson, isNotNull);
+    expect(WbNumericBounds, isNotNull);
     expect(WbMqttClient, isNotNull);
     expect(IDevice, isNotNull);
   });

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
@@ -83,7 +84,10 @@ class WbClient implements WbMqttClient {
   @override
   void publish(String topic, String payload, {bool retained = false}) {
     final builder = MqttClientPayloadBuilder();
-    builder.addString(payload);
+
+    for (var b in utf8.encode(payload)) {
+      builder.addByte(b);
+    }
     _client.publishMessage(
       WbMqttTopics.toBrokerTopic(topic),
       _qos,

@@ -41,12 +41,26 @@ void main() {
     });
   });
 
+  group('WbMetaJson', () {
+    test('собирает meta устройства', () {
+      const title = WbLocalizedTitle(en: 'Room Light', ru: 'Освещение');
+      expect(
+        WbMetaJson.device(title),
+        '{"driver":"vktmotage","title":{"en":"Room Light","ru":"Освещение"}}',
+      );
+    });
+
+    test('пустой title при null', () {
+      expect(
+        WbMetaJson.device(null),
+        '{"driver":"vktmotage","title":{}}',
+      );
+    });
+  });
+
   group('аннотации', () {
     test('VirtualDevice, InputControl и OutputControl const-конструируемы', () {
-      const device = VirtualDevice(
-        name: 'room_light',
-        title: WbLocalizedTitle(en: 'Room Light', ru: 'Освещение комнаты'),
-      );
+      const device = VirtualDevice();
 
       const inputControl = InputControl(
         type: WbControlType.switch_,
@@ -58,7 +72,6 @@ void main() {
         type: WbControlType.switch_,
         name: 'lamp',
         title: WbLocalizedTitle(en: 'Lamp', ru: 'Лампа'),
-        order: 1,
       );
 
       const valueInput = InputControl(
@@ -75,14 +88,13 @@ void main() {
       const enumOutput = OutputControl(
         type: WbControlType.text,
         enumTitles: {
-          '0': {'en': 'Off', 'ru': 'Выкл'},
-          '1': {'en': 'On', 'ru': 'Вкл'},
+          '0': WbLocalizedTitle(en: 'Off', ru: 'Выкл'),
+          '1': WbLocalizedTitle(en: 'On', ru: 'Вкл'),
         },
         title: WbLocalizedTitle(en: 'Mode', ru: 'Режим'),
       );
 
-      expect(device.name, 'room_light');
-      expect(device.title.en, 'Room Light');
+      expect(device, isA<VirtualDevice>());
 
       expect(inputControl, isA<ControlAnnotation>());
       expect(inputControl.type, WbControlType.switch_);
@@ -91,7 +103,6 @@ void main() {
       expect(outputControl, isA<ControlAnnotation>());
       expect(outputControl.type, WbControlType.switch_);
       expect(outputControl.name, 'lamp');
-      expect(outputControl.order, 1);
 
       expect(valueInput.units, WbUnits.watt);
       expect(valueInput.min, 0);
@@ -100,7 +111,7 @@ void main() {
       expect(valueInput.readonly, isTrue);
 
       expect(enumOutput.enumTitles, isNotNull);
-      expect(enumOutput.enumTitles!['0']!['ru'], 'Выкл');
+      expect(enumOutput.enumTitles!['0']!.ru, 'Выкл');
     });
 
     test('пример класса с аннотациями компилируется', () {
@@ -127,15 +138,21 @@ class _FakeWbMqttClient implements WbMqttClient {
   void unsubscribe(String topic) {}
 }
 
-@VirtualDevice(
-  name: 'room_light',
-  title: WbLocalizedTitle(en: 'Room Light', ru: 'Освещение комнаты'),
-)
+@VirtualDevice()
 class _RoomLight implements IDevice {
   _RoomLight(this.mqtt);
 
   @override
   final WbMqttClient mqtt;
+
+  @override
+  final String name = 'room_light';
+
+  @override
+  final WbLocalizedTitle? title = WbLocalizedTitle(
+    en: 'Room Light',
+    ru: 'Освещение комнаты',
+  );
 
   @InputControl(
     type: WbControlType.switch_,
@@ -146,7 +163,6 @@ class _RoomLight implements IDevice {
   @OutputControl(
     type: WbControlType.switch_,
     title: WbLocalizedTitle(en: 'Lamp', ru: 'Лампа'),
-    order: 1,
   )
   final bool lamp = false;
 
@@ -164,8 +180,8 @@ class _RoomLight implements IDevice {
   @OutputControl(
     type: WbControlType.text,
     enumTitles: {
-      '0': {'en': 'Off', 'ru': 'Выкл'},
-      '1': {'en': 'On', 'ru': 'Вкл'},
+      '0': WbLocalizedTitle(en: 'Off', ru: 'Выкл'),
+      '1': WbLocalizedTitle(en: 'On', ru: 'Вкл'),
     },
     title: WbLocalizedTitle(en: 'Mode', ru: 'Режим'),
   )

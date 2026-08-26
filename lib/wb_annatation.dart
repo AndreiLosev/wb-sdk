@@ -7,6 +7,8 @@ export 'types/wb_localized_title.dart';
 export 'types/wb_units.dart';
 export 'contracts/wb_mqtt_client.dart';
 export 'coder.dart';
+export 'wb_meta_json.dart';
+export 'wb_numeric_bounds.dart';
 export 'contracts/idevice.dart';
 export 'mqtt/wb_client.dart';
 export 'mqtt/wb_mqtt_topics.dart';

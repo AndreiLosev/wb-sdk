@@ -4,7 +4,8 @@ import 'control_annotation.dart';
 
 /// Выходной контрол: поле публикует значение в MQTT.
 ///
-/// Генератор публикует в control-топик и обрабатывает `/on`.
+/// Генератор подписывается на `{name}/{control}/on`,
+/// публикует значение в `{name}/{control}` через `set{Field}`.
 @Target({TargetKind.field})
 class OutputControl extends ControlAnnotation {
   const OutputControl({
@@ -15,7 +16,6 @@ class OutputControl extends ControlAnnotation {
     super.min,
     super.max,
     super.precision,
-    super.order,
     super.readonly = false,
     super.hidden = false,
     super.enumTitles,
