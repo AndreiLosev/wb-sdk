@@ -2,6 +2,7 @@ import 'package:meta/meta.dart';
 import 'package:wb_annatation/contracts/idevice.dart';
 import 'package:wb_annatation/contracts/wb_mqtt_client.dart';
 import 'package:wb_annatation/mqtt/wb_client.dart';
+import 'package:wb_annatation/mqtt/wb_topic_mapping.dart';
 
 class _TopicRoute {
   const _TopicRoute({required this.device, required this.isInput});
@@ -14,11 +15,15 @@ enum _OrchestratorState { idle, prepared, running, stopped }
 
 /// Управляет [IDevice]: подписки, диспетчеризация MQTT, вызов [IDevice.execute].
 class WbOrchestrator {
-  WbOrchestrator({required this._mqtt, required List<IDevice> devices})
-    : _routes = _buildRoutes(devices);
+  WbOrchestrator({
+    required this._mqtt,
+    required List<IDevice> devices,
+    this._topicMapping = const WbTopicMapping(),
+  }) : _routes = _buildRoutes(devices);
 
   final WbMqttClient _mqtt;
   final Map<String, _TopicRoute> _routes;
+  final WbTopicMapping _topicMapping;
 
   _OrchestratorState _state = _OrchestratorState.idle;
 
@@ -93,15 +98,21 @@ class WbOrchestrator {
     for (final topic in _routes.keys) {
       _mqtt.subscribe(topic);
     }
+    for (final topic in _topicMapping.inputSubscriptionTopics) {
+      _mqtt.subscribe(topic);
+    }
   }
 
   void _handleMessage(WbMqttMessage message) {
-    final route = _routes[message.topic];
+    final topic = _topicMapping.resolveInputTopic(message.topic);
+    final route = _routes[topic];
     if (route == null) {
       return;
     }
 
-    route.device.updateField(message);
+    route.device.updateField(
+      WbMqttMessage(topic: topic, payload: message.payload),
+    );
     if (route.isInput) {
       route.device.execute();
     }

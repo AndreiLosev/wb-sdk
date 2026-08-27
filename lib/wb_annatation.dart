@@ -14,6 +14,7 @@ export 'wb_numeric_bounds.dart';
 export 'contracts/idevice.dart';
 export 'mqtt/wb_client.dart';
 export 'mqtt/wb_mqtt_topics.dart';
+export 'mqtt/wb_topic_mapping.dart';
 export 'storage/wb_hive_storage.dart';
 export 'orchestrator/wb_orchestrator.dart';
 export 'orchestrator/wb_orchestrator_builder.dart';

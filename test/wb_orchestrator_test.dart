@@ -118,17 +118,77 @@ void main() {
       await runFuture;
     });
   });
+
+  group('WbTopicMapping integration', () {
+    late _FakeWbMqttClient mqtt;
+    late WbOrchestrator orchestrator;
+    late _TestDevice deviceA;
+
+    const topicMapping = WbTopicMapping(
+      inputs: {'alias/temp/on': 'dev_a/temp/on'},
+      outputs: {'dev_a/lamp/on': 'alias/lamp/on'},
+    );
+
+    setUp(() async {
+      mqtt = _FakeWbMqttClient(topicMapping: topicMapping);
+      deviceA = _TestDevice(
+        name: 'dev_a',
+        inputs: {'dev_a/temp/on'},
+        outputs: {'dev_a/lamp/on'},
+      );
+      orchestrator = await WbOrchestratorBuilder.test(
+        mqtt: mqtt,
+        topicMapping: topicMapping,
+      ).build(devices: [deviceA]);
+    });
+
+    test('алиас input-топика вызывает updateField и execute', () {
+      orchestrator.dispatchMessage(
+        const WbMqttMessage(topic: 'alias/temp/on', payload: '21.5'),
+      );
+
+      expect(deviceA.updateFieldCalls, 1);
+      expect(deviceA.executeCalls, 1);
+      expect(deviceA.lastMessage?.topic, 'dev_a/temp/on');
+    });
+
+    test('prepareForTest подписывается на алиас input-топика', () {
+      orchestrator.prepareForTest();
+
+      expect(mqtt.subscribedTopics, contains('alias/temp/on'));
+    });
+
+    test('публикация в канонический output-топик дублируется в алиас', () {
+      mqtt.publish('dev_a/lamp/on', '1');
+
+      expect(
+        mqtt.publishedTopics,
+        ['dev_a/lamp/on', 'alias/lamp/on'],
+      );
+      expect(mqtt.publishedPayloads, ['1', '1']);
+    });
+  });
 }
 
 class _FakeWbMqttClient implements WbMqttClient {
+  _FakeWbMqttClient({this.topicMapping = const WbTopicMapping()});
+
+  final WbTopicMapping topicMapping;
   final _controller = StreamController<WbMqttMessage>.broadcast();
   final subscribedTopics = <String>[];
+  final publishedTopics = <String>[];
+  final publishedPayloads = <String>[];
 
   @override
   Stream<WbMqttMessage> get messages => _controller.stream;
 
   @override
-  void publish(String topic, String payload, {bool retained = false}) {}
+  void publish(String topic, String payload, {bool retained = false}) {
+    for (final mappedTopic in topicMapping.expandOutputTopics(topic)) {
+      publishedTopics.add(mappedTopic);
+      publishedPayloads.add(payload);
+    }
+  }
 
   @override
   void subscribe(String topic) {

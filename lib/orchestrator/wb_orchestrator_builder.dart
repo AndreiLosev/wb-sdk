@@ -2,6 +2,7 @@ import 'package:meta/meta.dart';
 import 'package:wb_annatation/contracts/idevice.dart';
 import 'package:wb_annatation/contracts/wb_mqtt_client.dart';
 import 'package:wb_annatation/mqtt/wb_client.dart';
+import 'package:wb_annatation/mqtt/wb_topic_mapping.dart';
 import 'package:wb_annatation/storage/wb_hive_storage.dart';
 
 import 'wb_orchestrator.dart';
@@ -16,6 +17,7 @@ class WbOrchestratorBuilder {
     this.mqttPassword,
     required this._storageDirectory,
     this.storageBoxName = 'wb_storage',
+    this.topicMapping = const WbTopicMapping(),
   });
 
   final String _mqttHost;
@@ -25,6 +27,7 @@ class WbOrchestratorBuilder {
   final String? mqttPassword;
   final String _storageDirectory;
   final String storageBoxName;
+  final WbTopicMapping topicMapping;
 
   bool _built = false;
 
@@ -32,8 +35,10 @@ class WbOrchestratorBuilder {
 
   /// Пропускает [WbHiveStorage.open] и [WbClient.connect].
   @visibleForTesting
-  WbOrchestratorBuilder.test({required WbMqttClient mqtt})
-    : _testMqtt = mqtt,
+  WbOrchestratorBuilder.test({
+    required WbMqttClient mqtt,
+    this.topicMapping = const WbTopicMapping(),
+  }) : _testMqtt = mqtt,
       _mqttHost = '',
       _mqttClientId = '',
       _storageDirectory = '',
@@ -50,7 +55,11 @@ class WbOrchestratorBuilder {
     _built = true;
 
     final mqtt = _testMqtt ?? await _createMqttClient();
-    return WbOrchestrator(mqtt: mqtt, devices: devices);
+    return WbOrchestrator(
+      mqtt: mqtt,
+      devices: devices,
+      topicMapping: topicMapping,
+    );
   }
 
   Future<WbMqttClient> _createMqttClient() async {
@@ -65,6 +74,7 @@ class WbOrchestratorBuilder {
       clientId: _mqttClientId,
       username: mqttUsername,
       password: mqttPassword,
+      topicMapping: topicMapping,
     );
     await client.connect();
     return WbClient.getInstanse();
