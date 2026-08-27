@@ -23,11 +23,11 @@ void main() {
     );
   });
 
-  test('open, pub, get и getInstanse', () async {
+  test('open, put, get и getInstanse', () async {
     final storage = WbHiveStorage(directory: tempDir.path);
     await storage.open();
 
-    storage.pub('host', '192.168.1.1');
+    storage.put('host', '192.168.1.1');
     expect(storage.get('host', 'localhost'), '192.168.1.1');
     expect(storage.get('missing', 'default'), 'default');
     expect(identical(storage, WbHiveStorage.getInstanse()), isTrue);

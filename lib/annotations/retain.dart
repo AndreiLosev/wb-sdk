@@ -4,5 +4,5 @@ import 'package:meta/meta_meta.dart';
 class Retain {
   final dynamic init;
 
-  const new(this.init);
+  const Retain(this.init);
 }

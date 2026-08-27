@@ -1,6 +1,7 @@
 export 'annotations/control_annotation.dart';
 export 'annotations/input_control.dart';
 export 'annotations/output_control.dart';
+export 'annotations/retain.dart';
 export 'annotations/virtual_device.dart';
 export 'types/wb_control_type.dart';
 export 'types/wb_localized_title.dart';

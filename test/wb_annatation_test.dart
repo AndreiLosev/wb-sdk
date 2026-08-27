@@ -7,6 +7,7 @@ void main() {
     expect(ControlAnnotation, isNotNull);
     expect(InputControl, isNotNull);
     expect(OutputControl, isNotNull);
+    expect(Retain, isNotNull);
     expect(WbControlType, isNotNull);
     expect(WbLocalizedTitle, isNotNull);
     expect(WbUnits, isNotNull);

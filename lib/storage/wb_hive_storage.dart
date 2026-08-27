@@ -12,7 +12,7 @@ class WbHiveStorage implements WbStorage {
 
   Box? _box;
 
-  static WbHiveStorage getInstanse() {
+  static WbStorage getInstanse() {
     if (_instanse == null) {
       throw Exception('WbHiveStorage must be initialized');
     }
@@ -28,7 +28,7 @@ class WbHiveStorage implements WbStorage {
   }
 
   @override
-  void pub(String key, Object? value) {
+  void put(String key, Object? value) {
     _requireBox().put(key, value);
   }
 
