@@ -6,7 +6,6 @@ import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:wb_annatation/contracts/wb_mqtt_client.dart';
 
 import 'wb_mqtt_topics.dart';
-import 'wb_topic_mapping.dart';
 
 /// Реализация [WbMqttClient] на базе `package:mqtt_client`.
 class WbClient implements WbMqttClient {
@@ -19,7 +18,6 @@ class WbClient implements WbMqttClient {
     this._username,
     this._password,
     this._qos = MqttQos.atLeastOnce,
-    this._topicMapping = const WbTopicMapping(),
   }) : _client = MqttServerClient.withPort(host, clientId, port) {
     _client.setProtocolV311();
     _client.keepAlivePeriod = 60;
@@ -34,7 +32,6 @@ class WbClient implements WbMqttClient {
   final String? _username;
   final String? _password;
   final MqttQos _qos;
-  final WbTopicMapping _topicMapping;
 
   final _messagesController = StreamController<WbMqttMessage>.broadcast();
   final _subscribedTopics = <String>{};
@@ -86,14 +83,12 @@ class WbClient implements WbMqttClient {
 
   @override
   void publish(String topic, String payload, {bool retained = false}) {
-    for (final mappedTopic in _topicMapping.expandOutputTopics(topic)) {
-      _client.publishMessage(
-        WbMqttTopics.toBrokerTopic(mappedTopic),
-        _qos,
-        makePayload(payload).payload!,
-        retain: retained,
-      );
-    }
+    _client.publishMessage(
+      WbMqttTopics.toBrokerTopic(topic),
+      _qos,
+      makePayload(payload).payload!,
+      retain: retained,
+    );
   }
 
   @override

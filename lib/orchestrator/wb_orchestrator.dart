@@ -4,6 +4,8 @@ import 'package:wb_annatation/contracts/wb_mqtt_client.dart';
 import 'package:wb_annatation/mqtt/wb_client.dart';
 import 'package:wb_annatation/mqtt/wb_topic_mapping.dart';
 
+late void Function(String topic, String payload, {bool retained}) wbPublish;
+
 class _TopicRoute {
   const _TopicRoute({required this.device, required this.isInput});
 
@@ -19,7 +21,9 @@ class WbOrchestrator {
     required this._mqtt,
     required List<IDevice> devices,
     this._topicMapping = const WbTopicMapping(),
-  }) : _routes = _buildRoutes(devices);
+  }) : _routes = _buildRoutes(devices) {
+    _makeWpPublish();
+  }
 
   final WbMqttClient _mqtt;
   final Map<String, _TopicRoute> _routes;
@@ -126,5 +130,13 @@ class WbOrchestrator {
   @visibleForTesting
   void prepareForTest() {
     _prepare();
+  }
+
+  void _makeWpPublish() {
+    wbPublish = (String topic, String payload, {bool retained = true}) {
+      for (final mappedTopic in _topicMapping.expandOutputTopics(topic)) {
+        _mqtt.publish(mappedTopic, payload, retained: retained);
+      }
+    };
   }
 }
