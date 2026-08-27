@@ -82,17 +82,16 @@ class WbOrchestrator {
     }
     _state = _OrchestratorState.prepared;
 
-    for (final r in _routes.values) {
-      r.device.init();
+    final devices = <IDevice>{};
+    for (final route in _routes.values) {
+      devices.add(route.device);
+    }
+    for (final device in devices) {
+      device.init();
     }
 
-    for (final r in _routes.values) {
-      for (final t in r.device.inputs()) {
-        _mqtt.subscribe(t);
-      }
-      for (final t in r.device.outputs()) {
-        _mqtt.subscribe(t);
-      }
+    for (final topic in _routes.keys) {
+      _mqtt.subscribe(topic);
     }
   }
 
