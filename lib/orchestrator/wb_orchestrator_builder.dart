@@ -74,7 +74,6 @@ class WbOrchestratorBuilder {
       clientId: _mqttClientId,
       username: mqttUsername,
       password: mqttPassword,
-      topicMapping: topicMapping,
     );
     await client.connect();
     return WbClient.getInstanse();

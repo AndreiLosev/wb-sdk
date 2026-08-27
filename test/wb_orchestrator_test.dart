@@ -130,7 +130,7 @@ void main() {
     );
 
     setUp(() async {
-      mqtt = _FakeWbMqttClient(topicMapping: topicMapping);
+      mqtt = _FakeWbMqttClient();
       deviceA = _TestDevice(
         name: 'dev_a',
         inputs: {'dev_a/temp/on'},
@@ -159,7 +159,7 @@ void main() {
     });
 
     test('публикация в канонический output-топик дублируется в алиас', () {
-      mqtt.publish('dev_a/lamp/on', '1');
+      wbPublish('dev_a/lamp/on', '1');
 
       expect(
         mqtt.publishedTopics,
@@ -171,9 +171,6 @@ void main() {
 }
 
 class _FakeWbMqttClient implements WbMqttClient {
-  _FakeWbMqttClient({this.topicMapping = const WbTopicMapping()});
-
-  final WbTopicMapping topicMapping;
   final _controller = StreamController<WbMqttMessage>.broadcast();
   final subscribedTopics = <String>[];
   final publishedTopics = <String>[];
@@ -184,10 +181,8 @@ class _FakeWbMqttClient implements WbMqttClient {
 
   @override
   void publish(String topic, String payload, {bool retained = false}) {
-    for (final mappedTopic in topicMapping.expandOutputTopics(topic)) {
-      publishedTopics.add(mappedTopic);
-      publishedPayloads.add(payload);
-    }
+    publishedTopics.add(topic);
+    publishedPayloads.add(payload);
   }
 
   @override
