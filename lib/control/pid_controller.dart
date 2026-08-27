@@ -1,7 +1,10 @@
+import 'dart:async';
+
+import 'package:wb_annatation/contracts/wb_mqtt_client.dart';
 import 'package:wb_annatation/control/pid_controller_base.dart';
 import 'package:wb_annatation/orchestrator/wb_orchestrator.dart';
 
-/// PID-регулятор с автоматическим расчётом [dt] между вызовами
+/// PID-регулятор с автоматическим расчётом [_dt] между вызовами
 /// и публикацией выхода в MQTT при длительном интервале.
 class PidController extends PidControllerBase {
   PidController({
@@ -11,53 +14,53 @@ class PidController extends PidControllerBase {
     super.outputMin,
     super.outputMax,
     super.setpoint = 0,
-    required this.outputTopic,
-    this.publishMinDt = const Duration(seconds: 10),
-    DateTime Function()? now,
-  }) : _now = now ?? DateTime.now;
-
-  static const double _firstCallDt = 0.001;
-
-  final String outputTopic;
-  final Duration publishMinDt;
-  final DateTime Function() _now;
-
-  DateTime? _lastUpdateAt;
-
-  /// Вычисляет управляющий сигнал, автоматически определяя [dt]
-  /// по времени с предыдущего вызова, если [dt] не передан.
-  @override
-  double update({
-    required double processVariable,
-    double? dt,
-    double? setpoint,
+    this._runUpdate,
+    this._autoUpdateDelay = const Duration(seconds: 10),
   }) {
-    final currentTime = _now();
-    final resolvedDt = dt ??
-        (_lastUpdateAt == null
-            ? _firstCallDt
-            : currentTime.difference(_lastUpdateAt!).inMicroseconds / 1e6);
+    _resetTimer();
+  }
 
-    if (dt == null) {
-      _lastUpdateAt = currentTime;
-    }
+  Timer? timer;
 
-    final output = super.update(
+  final Duration _autoUpdateDelay;
+
+  final WbMqttMessage Function()? _runUpdate;
+
+  final _dt = Stopwatch();
+
+  double calculate({required double processVariable, double? setpoint}) {
+    final result = update(
       processVariable: processVariable,
-      dt: resolvedDt,
+      dt: _getTimeDiff(),
       setpoint: setpoint,
     );
 
-    if (dt == null && resolvedDt > publishMinDt.inSeconds) {
-      wbPublish(outputTopic, output.toString());
-    }
+    _resetTimer();
 
-    return output;
+    return result;
   }
 
-  @override
-  void reset() {
-    super.reset();
-    _lastUpdateAt = null;
+  double _getTimeDiff() {
+    if (!_dt.isRunning) {
+      _dt.start();
+      return 0.01;
+    }
+
+    final res = _dt.elapsed.inSeconds.toDouble();
+
+    _dt.reset();
+
+    return res;
+  }
+
+  void _resetTimer() {
+    timer?.cancel();
+    timer = Timer(_autoUpdateDelay, () {
+      if (_runUpdate == null) {
+        return;
+      }
+      final WbMqttMessage(:topic, :payload) = _runUpdate();
+      wbPublish(topic, payload, retained: true);
+    });
   }
 }
