@@ -39,13 +39,13 @@ class WbOrchestratorBuilder {
     required WbMqttClient mqtt,
     this.topicMapping = const WbTopicMapping(),
   }) : _testMqtt = mqtt,
-      _mqttHost = '',
-      _mqttClientId = '',
-      _storageDirectory = '',
-      mqttPort = 1883,
-      mqttUsername = null,
-      mqttPassword = null,
-      storageBoxName = 'wb_storage';
+       _mqttHost = '',
+       _mqttClientId = '',
+       _storageDirectory = '',
+       mqttPort = 1883,
+       mqttUsername = null,
+       mqttPassword = null,
+       storageBoxName = 'wb_storage';
 
   /// Открывает storage, подключает MQTT и возвращает готовый [WbOrchestrator].
   Future<WbOrchestrator> build({required List<IDevice> devices}) async {
