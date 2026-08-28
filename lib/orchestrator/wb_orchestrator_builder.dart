@@ -1,6 +1,7 @@
 import 'package:meta/meta.dart';
 import 'package:wb_sdk/contracts/idevice.dart';
 import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
+import 'package:wb_sdk/contracts/wb_storage.dart';
 import 'package:wb_sdk/mqtt/wb_client.dart';
 import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
 import 'package:wb_sdk/storage/wb_hive_storage.dart';
@@ -17,8 +18,8 @@ class WbOrchestratorBuilder {
     this.mqttPassword,
     required this._storageDirectory,
     this.storageBoxName = 'wb_storage',
-    this.topicMapping = const WbTopicMapping(),
-  });
+    WbTopicMapping? topicMapping,
+  }) : topicMapping = topicMapping ?? WbTopicMapping();
 
   final String _mqttHost;
   final int mqttPort;
@@ -32,20 +33,24 @@ class WbOrchestratorBuilder {
   bool _built = false;
 
   WbMqttClient? _testMqtt;
+  WbStorage? _testStorage;
 
   /// Пропускает [WbHiveStorage.open] и [WbClient.connect].
   @visibleForTesting
   WbOrchestratorBuilder.test({
     required WbMqttClient mqtt,
-    this.topicMapping = const WbTopicMapping(),
+    WbTopicMapping? topicMapping,
+    WbStorage? storage,
   }) : _testMqtt = mqtt,
+       _testStorage = storage,
        _mqttHost = '',
        _mqttClientId = '',
        _storageDirectory = '',
        mqttPort = 1883,
        mqttUsername = null,
        mqttPassword = null,
-       storageBoxName = 'wb_storage';
+       storageBoxName = 'wb_storage',
+       topicMapping = topicMapping ?? WbTopicMapping();
 
   /// Открывает storage, подключает MQTT и возвращает готовый [WbOrchestrator].
   Future<WbOrchestrator> build({required List<IDevice> devices}) async {
@@ -54,20 +59,41 @@ class WbOrchestratorBuilder {
     }
     _built = true;
 
+    WbStorage? storage;
+    WbTopicMapping mapping;
+
+    if (_testMqtt != null) {
+      storage = _testStorage;
+      mapping = WbTopicMapping(
+        inputs: topicMapping.inputs,
+        outputs: topicMapping.outputs,
+      );
+      if (storage != null) {
+        mapping.load(storage, defaults: topicMapping);
+      }
+    } else {
+      await WbHiveStorage(
+        directory: _storageDirectory,
+        boxName: storageBoxName,
+      ).open();
+      storage = WbHiveStorage.getInstanse();
+      mapping = WbTopicMapping(
+        inputs: topicMapping.inputs,
+        outputs: topicMapping.outputs,
+      );
+      mapping.load(storage, defaults: topicMapping);
+    }
+
     final mqtt = _testMqtt ?? await _createMqttClient();
     return WbOrchestrator(
       mqtt: mqtt,
       devices: devices,
-      topicMapping: topicMapping,
+      topicMapping: mapping,
+      storage: storage,
     );
   }
 
   Future<WbMqttClient> _createMqttClient() async {
-    await WbHiveStorage(
-      directory: _storageDirectory,
-      boxName: storageBoxName,
-    ).open();
-
     final client = WbClient(
       host: _mqttHost,
       port: mqttPort,

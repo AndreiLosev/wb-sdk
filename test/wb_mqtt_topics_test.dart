@@ -37,6 +37,20 @@ void main() {
         throwsArgumentError,
       );
     });
+
+    test('io_mapping input-топик', () {
+      expect(
+        WbMqttTopics.toBrokerTopic('io_mapping/inputs/alias/temp/on'),
+        '/io_mapping/inputs/alias/temp/on',
+      );
+    });
+
+    test('io_mapping wildcard', () {
+      expect(
+        WbMqttTopics.toBrokerTopic('io_mapping/inputs/#'),
+        '/io_mapping/inputs/#',
+      );
+    });
   });
 
   group('WbMqttTopics.fromBrokerTopic', () {
@@ -46,6 +60,9 @@ void main() {
         'room_light/lamp/meta',
         'room_light/lamp/on',
         'test-dev/temperature',
+        'io_mapping/inputs/alias/temp/on',
+        'io_mapping/outputs/dev_a/lamp/on',
+        'io_mapping/inputs/#',
       ];
 
       for (final short in topics) {

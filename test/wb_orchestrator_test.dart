@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:test/test.dart';
+import 'package:wb_sdk/contracts/wb_storage.dart';
 import 'package:wb_sdk/orchestrator/wb_orchestrator.dart';
 import 'package:wb_sdk/orchestrator/wb_orchestrator_builder.dart';
 import 'package:wb_sdk/wb_sdk.dart';
@@ -124,7 +125,7 @@ void main() {
     late WbOrchestrator orchestrator;
     late _TestDevice deviceA;
 
-    const topicMapping = WbTopicMapping(
+    final topicMapping = WbTopicMapping(
       inputs: {'alias/temp/on': 'dev_a/temp/on'},
       outputs: {'dev_a/lamp/on': 'alias/lamp/on'},
     );
@@ -168,11 +169,102 @@ void main() {
       expect(mqtt.publishedPayloads, ['1', '1']);
     });
   });
+
+  group('WbTopicMapping io_mapping sync', () {
+    late _FakeWbMqttClient mqtt;
+    late _FakeStorage storage;
+    late WbOrchestrator orchestrator;
+    late _TestDevice deviceA;
+
+    setUp(() async {
+      mqtt = _FakeWbMqttClient();
+      storage = _FakeStorage();
+      deviceA = _TestDevice(
+        name: 'dev_a',
+        inputs: {'dev_a/temp/on'},
+        outputs: {'dev_a/lamp/on'},
+      );
+      orchestrator = await WbOrchestratorBuilder.test(
+        mqtt: mqtt,
+        storage: storage,
+        topicMapping: WbTopicMapping(
+          inputs: {'alias/temp/on': 'dev_a/temp/on'},
+        ),
+      ).build(devices: [deviceA]);
+    });
+
+    test('prepareForTest публикует и подписывается на io_mapping', () {
+      orchestrator.prepareForTest();
+
+      expect(
+        mqtt.subscribedTopics,
+        containsAll(WbTopicMapping.ioMappingSubscriptionTopics),
+      );
+      expect(
+        mqtt.publishedTopics,
+        contains('io_mapping/inputs/alias/temp/on'),
+      );
+      expect(mqtt.publishedPayloads, contains('dev_a/temp/on'));
+    });
+
+    test('io_mapping input обновляет маппинг, сохраняет и подписывается', () {
+      orchestrator.prepareForTest();
+
+      orchestrator.dispatchMessage(
+        const WbMqttMessage(
+          topic: 'io_mapping/inputs/new_alias/temp/on',
+          payload: 'dev_a/temp/on',
+        ),
+      );
+
+      expect(storage.get(WbTopicMapping.inputsStorageKey, null), {
+        'alias/temp/on': 'dev_a/temp/on',
+        'new_alias/temp/on': 'dev_a/temp/on',
+      });
+      expect(mqtt.subscribedTopics, contains('new_alias/temp/on'));
+    });
+
+    test('сообщение на динамический алиас маршрутизируется в устройство', () {
+      orchestrator.prepareForTest();
+
+      orchestrator.dispatchMessage(
+        const WbMqttMessage(
+          topic: 'io_mapping/inputs/new_alias/temp/on',
+          payload: 'dev_a/temp/on',
+        ),
+      );
+      orchestrator.dispatchMessage(
+        const WbMqttMessage(topic: 'new_alias/temp/on', payload: '22.0'),
+      );
+
+      expect(deviceA.updateFieldCalls, 1);
+      expect(deviceA.executeCalls, 1);
+      expect(deviceA.lastMessage?.topic, 'dev_a/temp/on');
+    });
+
+    test('пустой payload удаляет input и отписывается от алиаса', () {
+      orchestrator.prepareForTest();
+
+      orchestrator.dispatchMessage(
+        const WbMqttMessage(
+          topic: 'io_mapping/inputs/alias/temp/on',
+          payload: '',
+        ),
+      );
+
+      expect(
+        storage.get(WbTopicMapping.inputsStorageKey, null),
+        <String, String>{},
+      );
+      expect(mqtt.unsubscribedTopics, contains('alias/temp/on'));
+    });
+  });
 }
 
 class _FakeWbMqttClient implements WbMqttClient {
   final _controller = StreamController<WbMqttMessage>.broadcast();
   final subscribedTopics = <String>[];
+  final unsubscribedTopics = <String>[];
   final publishedTopics = <String>[];
   final publishedPayloads = <String>[];
 
@@ -191,7 +283,9 @@ class _FakeWbMqttClient implements WbMqttClient {
   }
 
   @override
-  void unsubscribe(String topic) {}
+  void unsubscribe(String topic) {
+    unsubscribedTopics.add(topic);
+  }
 
   void emit(WbMqttMessage message) {
     _controller.add(message);
@@ -244,5 +338,17 @@ class _TestDevice implements IDevice {
   void updateField(WbMqttMessage mess) {
     updateFieldCalls++;
     lastMessage = mess;
+  }
+}
+
+class _FakeStorage implements WbStorage {
+  final _data = <String, Object?>{};
+
+  @override
+  Object? get(String key, Object? defaultValue) => _data[key] ?? defaultValue;
+
+  @override
+  void put(String key, Object? value) {
+    _data[key] = value;
   }
 }

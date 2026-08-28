@@ -1,6 +1,7 @@
 import 'package:meta/meta.dart';
 import 'package:wb_sdk/contracts/idevice.dart';
 import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
+import 'package:wb_sdk/contracts/wb_storage.dart';
 import 'package:wb_sdk/mqtt/wb_client.dart';
 import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
 
@@ -20,14 +21,18 @@ class WbOrchestrator {
   WbOrchestrator({
     required this._mqtt,
     required List<IDevice> devices,
-    this._topicMapping = const WbTopicMapping(),
-  }) : _routes = _buildRoutes(devices) {
+    WbTopicMapping? topicMapping,
+    WbStorage? storage,
+  }) : _topicMapping = topicMapping ?? WbTopicMapping(),
+       _storage = storage,
+       _routes = _buildRoutes(devices) {
     _makeWpPublish();
   }
 
   final WbMqttClient _mqtt;
   final Map<String, _TopicRoute> _routes;
   final WbTopicMapping _topicMapping;
+  final WbStorage? _storage;
 
   _OrchestratorState _state = _OrchestratorState.idle;
 
@@ -105,9 +110,21 @@ class WbOrchestrator {
     for (final topic in _topicMapping.inputSubscriptionTopics) {
       _mqtt.subscribe(topic);
     }
+
+    if (_storage != null) {
+      _topicMapping.publishAll(_mqtt);
+    }
+    for (final topic in WbTopicMapping.ioMappingSubscriptionTopics) {
+      _mqtt.subscribe(topic);
+    }
   }
 
   void _handleMessage(WbMqttMessage message) {
+    if (message.topic.startsWith('io_mapping/')) {
+      _handleIoMappingMessage(message);
+      return;
+    }
+
     final topic = _topicMapping.resolveInputTopic(message.topic);
     final route = _routes[topic];
     if (route == null) {
@@ -119,6 +136,48 @@ class WbOrchestrator {
     );
     if (route.isInput) {
       route.device.execute();
+    }
+  }
+
+  void _handleIoMappingMessage(WbMqttMessage message) {
+    final parsed = WbTopicMapping.parseIoMappingTopic(message.topic);
+    if (parsed == null) {
+      return;
+    }
+
+    final previousInputKey = parsed.isInput ? parsed.key : null;
+    final changed = _topicMapping.applyIoMapping(
+      isInput: parsed.isInput,
+      key: parsed.key,
+      value: message.payload,
+    );
+    if (!changed) {
+      return;
+    }
+
+    if (parsed.isInput) {
+      _syncInputAliasSubscription(
+        previousInputKey,
+        message.payload,
+      );
+    }
+
+    final storage = _storage;
+    if (storage != null) {
+      _topicMapping.save(storage);
+    }
+  }
+
+  void _syncInputAliasSubscription(String? alias, String value) {
+    if (value.isEmpty) {
+      if (alias != null) {
+        _mqtt.unsubscribe(alias);
+      }
+      return;
+    }
+
+    if (alias != null) {
+      _mqtt.subscribe(alias);
     }
   }
 

@@ -1,9 +1,14 @@
 /// Маппинг коротких топиков генератора на пути Wiren Board MQTT.
 abstract final class WbMqttTopics {
   static const _devicesPrefix = '/devices/';
+  static const _ioMappingPrefix = 'io_mapping/';
 
-  /// Короткий топик → broker (`/devices/...`).
+  /// Короткий топик → broker (`/devices/...` или `/io_mapping/...`).
   static String toBrokerTopic(String shortTopic) {
+    if (shortTopic.startsWith(_ioMappingPrefix)) {
+      return '/$shortTopic';
+    }
+
     final parts = shortTopic.split('/');
     if (parts.length < 2) {
       throw ArgumentError.value(shortTopic, 'shortTopic', 'Invalid short topic');
@@ -34,6 +39,10 @@ abstract final class WbMqttTopics {
 
   /// Broker топик → короткий топик для `updateField`.
   static String? fromBrokerTopic(String brokerTopic) {
+    if (brokerTopic.startsWith('/$_ioMappingPrefix')) {
+      return brokerTopic.substring(1);
+    }
+
     if (!brokerTopic.startsWith(_devicesPrefix)) {
       return null;
     }
