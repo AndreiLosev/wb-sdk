@@ -2,10 +2,12 @@
 abstract final class WbMqttTopics {
   static const _devicesPrefix = '/devices/';
   static const _ioMappingPrefix = 'io_mapping/';
+  static const _debugPrefix = 'debug/';
 
-  /// Короткий топик → broker (`/devices/...` или `/io_mapping/...`).
+  /// Короткий топик → broker (`/devices/...`, `/io_mapping/...` или `/debug/...`).
   static String toBrokerTopic(String shortTopic) {
-    if (shortTopic.startsWith(_ioMappingPrefix)) {
+    if (shortTopic.startsWith(_ioMappingPrefix) ||
+        shortTopic.startsWith(_debugPrefix)) {
       return '/$shortTopic';
     }
 
@@ -39,7 +41,8 @@ abstract final class WbMqttTopics {
 
   /// Broker топик → короткий топик для `updateField`.
   static String? fromBrokerTopic(String brokerTopic) {
-    if (brokerTopic.startsWith('/$_ioMappingPrefix')) {
+    if (brokerTopic.startsWith('/$_ioMappingPrefix') ||
+        brokerTopic.startsWith('/$_debugPrefix')) {
       return brokerTopic.substring(1);
     }
 

@@ -2,6 +2,7 @@ import 'package:meta/meta.dart';
 import 'package:wb_sdk/contracts/idevice.dart';
 import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
 import 'package:wb_sdk/contracts/wb_storage.dart';
+import 'package:wb_sdk/debug/wb_debug_log.dart';
 import 'package:wb_sdk/mqtt/wb_client.dart';
 import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
 
@@ -25,12 +26,17 @@ class WbOrchestrator {
     WbStorage? storage,
   }) : _topicMapping = topicMapping ?? WbTopicMapping(),
        _storage = storage,
-       _routes = _buildRoutes(devices) {
+       _routes = _buildRoutes(devices),
+       _deviceNames = _collectDeviceNames(devices),
+       _debugLog = WbDebugLog(mqtt: _mqtt) {
     _makeWpPublish();
+    _makeWbDebugLog();
   }
 
   final WbMqttClient _mqtt;
   final Map<String, _TopicRoute> _routes;
+  final Set<String> _deviceNames;
+  final WbDebugLog _debugLog;
   final WbTopicMapping _topicMapping;
   final WbStorage? _storage;
 
@@ -50,6 +56,9 @@ class WbOrchestrator {
 
     return routes;
   }
+
+  static Set<String> _collectDeviceNames(List<IDevice> devices) =>
+      devices.map((device) => device.name).toSet();
 
   /// Инициализирует устройства, подписывается на топики и обрабатывает сообщения.
   Future<void> run() async {
@@ -117,9 +126,17 @@ class WbOrchestrator {
     for (final topic in WbTopicMapping.ioMappingSubscriptionTopics) {
       _mqtt.subscribe(topic);
     }
+    for (final topic in WbDebugLog.subscriptionTopics(_deviceNames)) {
+      _mqtt.subscribe(topic);
+    }
   }
 
   void _handleMessage(WbMqttMessage message) {
+    if (message.topic.startsWith('debug/')) {
+      _handleDebugMessage(message);
+      return;
+    }
+
     if (message.topic.startsWith('io_mapping/')) {
       _handleIoMappingMessage(message);
       return;
@@ -137,6 +154,15 @@ class WbOrchestrator {
     if (route.isInput) {
       route.device.execute();
     }
+  }
+
+  void _handleDebugMessage(WbMqttMessage message) {
+    final parts = message.topic.split('/');
+    if (parts.length != 2 || parts[0] != 'debug') {
+      return;
+    }
+
+    _debugLog.updateFlag(parts[1], message.payload);
   }
 
   void _handleIoMappingMessage(WbMqttMessage message) {
@@ -197,5 +223,9 @@ class WbOrchestrator {
         _mqtt.publish(mappedTopic, payload, retained: retained);
       }
     };
+  }
+
+  void _makeWbDebugLog() {
+    wbDebugLog = _debugLog.log;
   }
 }

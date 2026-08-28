@@ -51,6 +51,22 @@ void main() {
         '/io_mapping/inputs/#',
       );
     });
+
+    test('debug flag-топик', () {
+      expect(
+        WbMqttTopics.toBrokerTopic('debug/room_light'),
+        '/debug/room_light',
+      );
+    });
+
+    test('debug message-топик', () {
+      expect(
+        WbMqttTopics.toBrokerTopic(
+          'debug/room_light/2024-08-28T17:39:00.123',
+        ),
+        '/debug/room_light/2024-08-28T17:39:00.123',
+      );
+    });
   });
 
   group('WbMqttTopics.fromBrokerTopic', () {
@@ -63,6 +79,8 @@ void main() {
         'io_mapping/inputs/alias/temp/on',
         'io_mapping/outputs/dev_a/lamp/on',
         'io_mapping/inputs/#',
+        'debug/room_light',
+        'debug/room_light/2024-08-28T17:39:00.123',
       ];
 
       for (final short in topics) {

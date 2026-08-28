@@ -103,6 +103,8 @@ void main() {
         'dev_a/temp/on',
         'dev_a/lamp/on',
         'dev_b/switch/on',
+        'debug/dev_a',
+        'debug/dev_b',
       ]));
     });
 
@@ -257,6 +259,61 @@ void main() {
         <String, String>{},
       );
       expect(mqtt.unsubscribedTopics, contains('alias/temp/on'));
+    });
+  });
+
+  group('WbDebugLog integration', () {
+    late _FakeWbMqttClient mqtt;
+    late WbOrchestrator orchestrator;
+
+    setUp(() async {
+      mqtt = _FakeWbMqttClient();
+      orchestrator = await WbOrchestratorBuilder.test(mqtt: mqtt).build(
+        devices: [_TestDevice(name: 'dev_a')],
+      );
+    });
+
+    test('wbDebugLog публикует после включения флага', () {
+      orchestrator.prepareForTest();
+
+      orchestrator.dispatchMessage(
+        const WbMqttMessage(topic: 'debug/dev_a', payload: '1'),
+      );
+      wbDebugLog('dev_a', 'debug message');
+
+      expect(mqtt.publishedTopics.length, 1);
+      expect(mqtt.publishedTopics.first, startsWith('debug/dev_a/'));
+      expect(mqtt.publishedPayloads, ['debug message']);
+    });
+
+    test('wbDebugLog молчит после выключения флага', () {
+      orchestrator.prepareForTest();
+
+      orchestrator.dispatchMessage(
+        const WbMqttMessage(topic: 'debug/dev_a', payload: '1'),
+      );
+      wbDebugLog('dev_a', 'first');
+      orchestrator.dispatchMessage(
+        const WbMqttMessage(topic: 'debug/dev_a', payload: '0'),
+      );
+      wbDebugLog('dev_a', 'second');
+
+      expect(mqtt.publishedTopics.length, 1);
+      expect(mqtt.publishedPayloads, ['first']);
+    });
+
+    test('сообщения debug/dev_a/timestamp игнорируются', () {
+      orchestrator.prepareForTest();
+
+      orchestrator.dispatchMessage(
+        const WbMqttMessage(
+          topic: 'debug/dev_a/2024-08-28T17:39:00.123',
+          payload: '1',
+        ),
+      );
+      wbDebugLog('dev_a', 'msg');
+
+      expect(mqtt.publishedTopics, isEmpty);
     });
   });
 }
