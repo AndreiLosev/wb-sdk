@@ -14,7 +14,7 @@ class WbDebugLog {
   static String messageTopic(String deviceName, DateTime time) =>
       'debug/$deviceName/${time.toIso8601String()}';
 
-  static Set<String> subscriptionTopics(Set<String> deviceNames) =>
+  static Set<String> subscriptionTopics(Iterable<String> deviceNames) =>
       deviceNames.map(flagTopic).toSet();
 
   bool isEnabled(String deviceName) => _enabled[deviceName] ?? false;

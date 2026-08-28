@@ -8,6 +8,8 @@ import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
 
 late void Function(String topic, String payload, {bool retained}) wbPublish;
 
+late T Function<T extends IDevice>(String devName) getDevice;
+
 class _TopicRoute {
   const _TopicRoute({required this.device, required this.isInput});
 
@@ -26,15 +28,16 @@ class WbOrchestrator {
     this._storage,
   }) : _topicMapping = topicMapping ?? WbTopicMapping(),
        _routes = _buildRoutes(devices),
-       _deviceNames = _collectDeviceNames(devices),
+       _devices = _buildDevices(devices),
        _debugLog = WbDebugLog(mqtt: _mqtt) {
     _makeWpPublish();
     _makeWbDebugLog();
+    _makeGetDevice();
   }
 
   final WbMqttClient _mqtt;
   final Map<String, _TopicRoute> _routes;
-  final Set<String> _deviceNames;
+  final Map<String, IDevice> _devices;
   final WbDebugLog _debugLog;
   final WbTopicMapping _topicMapping;
   final WbStorage? _storage;
@@ -56,8 +59,8 @@ class WbOrchestrator {
     return routes;
   }
 
-  static Set<String> _collectDeviceNames(List<IDevice> devices) =>
-      devices.map((device) => device.name).toSet();
+  static Map<String, IDevice> _buildDevices(List<IDevice> devices) =>
+      Map.fromEntries(devices.map((e) => MapEntry(e.name, e)));
 
   /// Инициализирует устройства, подписывается на топики и обрабатывает сообщения.
   Future<void> run() async {
@@ -104,11 +107,7 @@ class WbOrchestrator {
     }
     _state = _OrchestratorState.prepared;
 
-    final devices = <IDevice>{};
-    for (final route in _routes.values) {
-      devices.add(route.device);
-    }
-    for (final device in devices) {
+    for (final device in _devices.values) {
       device.init();
     }
 
@@ -125,7 +124,7 @@ class WbOrchestrator {
     for (final topic in WbTopicMapping.ioMappingSubscriptionTopics) {
       _mqtt.subscribe(topic);
     }
-    for (final topic in WbDebugLog.subscriptionTopics(_deviceNames)) {
+    for (final topic in WbDebugLog.subscriptionTopics(_devices.keys)) {
       _mqtt.subscribe(topic);
     }
   }
@@ -223,5 +222,14 @@ class WbOrchestrator {
 
   void _makeWbDebugLog() {
     wbDebugLog = _debugLog.log;
+  }
+
+  void _makeGetDevice() {
+    getDevice = _getDevice;
+  }
+
+  T _getDevice<T extends IDevice>(String devName) {
+    print([_devices, devName]);
+    return _devices[devName]! as T;
   }
 }
