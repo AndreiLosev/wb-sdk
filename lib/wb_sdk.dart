@@ -13,6 +13,7 @@ export 'wb_meta_json.dart';
 export 'wb_numeric_bounds.dart';
 export 'control/pid_controller_base.dart';
 export 'control/pid_controller.dart';
+export 'control/triggers.dart';
 export 'contracts/idevice.dart';
 export 'mqtt/wb_client.dart';
 export 'mqtt/wb_mqtt_topics.dart';
