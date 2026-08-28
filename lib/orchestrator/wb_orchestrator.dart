@@ -23,9 +23,8 @@ class WbOrchestrator {
     required this._mqtt,
     required List<IDevice> devices,
     WbTopicMapping? topicMapping,
-    WbStorage? storage,
+    this._storage,
   }) : _topicMapping = topicMapping ?? WbTopicMapping(),
-       _storage = storage,
        _routes = _buildRoutes(devices),
        _deviceNames = _collectDeviceNames(devices),
        _debugLog = WbDebugLog(mqtt: _mqtt) {
@@ -182,10 +181,7 @@ class WbOrchestrator {
     }
 
     if (parsed.isInput) {
-      _syncInputAliasSubscription(
-        previousInputKey,
-        message.payload,
-      );
+      _syncInputAliasSubscription(previousInputKey, message.payload);
     }
 
     final storage = _storage;

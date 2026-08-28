@@ -4,7 +4,7 @@ late void Function(String deviceName, String message) wbDebugLog;
 
 /// Публикует debug-логи в MQTT при включённом флаге `debug/<device_name>`.
 class WbDebugLog {
-  WbDebugLog({required WbMqttClient mqtt}) : _mqtt = mqtt;
+  WbDebugLog({required this._mqtt});
 
   final WbMqttClient _mqtt;
   final Map<String, bool> _enabled = {};
@@ -23,13 +23,13 @@ class WbDebugLog {
     _enabled[deviceName] = _parseDebugFlag(payload);
   }
 
-  void log(String deviceName, String message) {
+  void log(String deviceName, Object? message) {
     if (!isEnabled(deviceName)) {
       return;
     }
     _mqtt.publish(
       messageTopic(deviceName, DateTime.timestamp()),
-      message,
+      message.toString(),
       retained: false,
     );
   }
