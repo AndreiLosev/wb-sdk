@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
-import 'package:wb_annatation/contracts/wb_mqtt_client.dart';
+import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
 
 import 'wb_mqtt_topics.dart';
 

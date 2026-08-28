@@ -1,9 +1,9 @@
 import 'package:meta/meta.dart';
-import 'package:wb_annatation/contracts/idevice.dart';
-import 'package:wb_annatation/contracts/wb_mqtt_client.dart';
-import 'package:wb_annatation/mqtt/wb_client.dart';
-import 'package:wb_annatation/mqtt/wb_topic_mapping.dart';
-import 'package:wb_annatation/storage/wb_hive_storage.dart';
+import 'package:wb_sdk/contracts/idevice.dart';
+import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
+import 'package:wb_sdk/mqtt/wb_client.dart';
+import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
+import 'package:wb_sdk/storage/wb_hive_storage.dart';
 
 import 'wb_orchestrator.dart';
 

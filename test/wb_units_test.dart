@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:wb_annatation/types/wb_units.dart';
+import 'package:wb_sdk/types/wb_units.dart';
 
 void main() {
   test('WbUnits.values содержит все 41 единицу из conventions', () {

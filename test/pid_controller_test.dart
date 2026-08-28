@@ -1,8 +1,8 @@
 import 'package:fake_async/fake_async.dart';
 import 'package:test/test.dart';
-import 'package:wb_annatation/contracts/wb_mqtt_client.dart';
-import 'package:wb_annatation/control/pid_controller.dart';
-import 'package:wb_annatation/orchestrator/wb_orchestrator.dart';
+import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
+import 'package:wb_sdk/control/pid_controller.dart';
+import 'package:wb_sdk/orchestrator/wb_orchestrator.dart';
 
 void main() {
   group('PidController', () {

@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:test/test.dart';
-import 'package:wb_annatation/orchestrator/wb_orchestrator.dart';
-import 'package:wb_annatation/orchestrator/wb_orchestrator_builder.dart';
-import 'package:wb_annatation/wb_annatation.dart';
+import 'package:wb_sdk/orchestrator/wb_orchestrator.dart';
+import 'package:wb_sdk/orchestrator/wb_orchestrator_builder.dart';
+import 'package:wb_sdk/wb_sdk.dart';
 
 void main() {
   group('WbOrchestratorBuilder', () {

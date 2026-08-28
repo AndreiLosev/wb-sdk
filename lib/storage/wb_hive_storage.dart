@@ -1,5 +1,5 @@
 import 'package:hive_ce/hive_ce.dart';
-import 'package:wb_annatation/contracts/wb_storage.dart';
+import 'package:wb_sdk/contracts/wb_storage.dart';
 
 /// Реализация [WbStorage] на базе `package:hive_ce`.
 class WbHiveStorage implements WbStorage {

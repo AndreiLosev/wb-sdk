@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:wb_annatation/contracts/wb_mqtt_client.dart';
-import 'package:wb_annatation/control/pid_controller_base.dart';
-import 'package:wb_annatation/orchestrator/wb_orchestrator.dart';
+import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
+import 'package:wb_sdk/control/pid_controller_base.dart';
+import 'package:wb_sdk/orchestrator/wb_orchestrator.dart';
 
 /// PID-регулятор с автоматическим расчётом [_lastCallTime] между вызовами
 /// и публикацией выхода в MQTT при длительном интервале.

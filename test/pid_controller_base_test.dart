@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:wb_annatation/control/pid_controller_base.dart';
+import 'package:wb_sdk/control/pid_controller_base.dart';
 
 void main() {
   group('PidControllerBase', () {

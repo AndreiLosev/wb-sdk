@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:test/test.dart';
-import 'package:wb_annatation/storage/wb_hive_storage.dart';
+import 'package:wb_sdk/storage/wb_hive_storage.dart';
 
 void main() {
   late Directory tempDir;

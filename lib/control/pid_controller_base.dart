@@ -1,4 +1,4 @@
-import 'package:wb_annatation/wb_numeric_bounds.dart';
+import 'package:wb_sdk/wb_numeric_bounds.dart';
 
 /// Дискретный PID-регулятор с ограничением выхода, anti-windup
 /// и производной по измерению (derivative on measurement).
