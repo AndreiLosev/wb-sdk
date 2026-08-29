@@ -2,7 +2,7 @@ import 'package:wb_sdk/wb_sdk.dart';
 
 typedef UpdateFieldFn = bool Function(String control, String payload);
 
-abstract base class IDevice {
+abstract class IDevice {
   final _meta = <String, Map<String, dynamic>>{};
   final _inputs = <String>{};
   final _outputs = <String>{};
@@ -25,9 +25,14 @@ abstract base class IDevice {
   Map<String, Object?> retains() => _retains;
 
   void updateField(WbMqttMessage mess) {
-    final [device, control] = mess.topic.split('/');
-    if (device != name) {
+    final prefix = '$name/';
+    if (!mess.topic.startsWith(prefix)) {
       return;
+    }
+
+    var control = mess.topic.substring(prefix.length);
+    if (control.endsWith('/on')) {
+      control = control.substring(0, control.length - 3);
     }
 
     for (final fn in _updateFields) {
@@ -52,7 +57,7 @@ abstract base class IDevice {
   T part<T extends PartOfIDevice>() => _parts[T] as T;
 }
 
-abstract base class PartOfIDevice {
+abstract class PartOfIDevice {
   Set<String> addInputs() => {};
   Set<String> addOutputs() => {};
   Map<String, Map<String, dynamic>> addMeta() => {};

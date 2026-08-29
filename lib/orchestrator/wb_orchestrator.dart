@@ -259,6 +259,7 @@ class WbOrchestrator {
             payload: payload,
           ),
         );
+        wbPublish('${device.name}/${entry.key}/on', payload);
       }
     }
   }
