@@ -94,11 +94,46 @@ void main() {
       expect(deviceB.executeCalls, 1);
     });
 
-    test('prepareForTest вызывает init и subscribe', () {
+    test('prepareForTest публикует meta, восстанавливает retains, вызывает execute и subscribe', () async {
+      final storage = _FakeStorage();
+      storage.put('dev_a.mode', '1');
+      final retainDevice = _TestDevice(
+        name: 'dev_a',
+        inputs: {'dev_a/temp/on'},
+        outputs: {'dev_a/lamp/on'},
+        meta: {
+          'lamp': {
+            'type': 'switch',
+            'title': {'en': 'Lamp'},
+          },
+          'mode': {
+            'type': 'text',
+            'title': {'en': 'Mode'},
+          },
+        },
+        retains: {'mode': '0'},
+      );
+      final mqtt = _FakeWbMqttClient();
+      final orchestrator = await WbOrchestratorBuilder.test(
+        mqtt: mqtt,
+        storage: storage,
+      ).build(devices: [retainDevice, deviceB]);
+
       orchestrator.prepareForTest();
 
-      expect(deviceA.initCalls, 1);
-      expect(deviceB.initCalls, 1);
+      expect(
+        mqtt.publishedTopics,
+        containsAll([
+          'dev_a/meta',
+          'dev_a/lamp/meta',
+        ]),
+      );
+      expect(mqtt.publishedPayloads, contains(contains('"driver":"vktmotage"')));
+      expect(retainDevice.updateFieldCalls, 1);
+      expect(retainDevice.lastMessage?.topic, 'dev_a/mode/on');
+      expect(retainDevice.lastMessage?.payload, '1');
+      expect(retainDevice.executeCalls, 1);
+      expect(deviceB.executeCalls, 1);
       expect(mqtt.subscribedTopics, containsAll([
         'dev_a/temp/on',
         'dev_a/lamp/on',
@@ -106,6 +141,20 @@ void main() {
         'debug/dev_a',
         'debug/dev_b',
       ]));
+    });
+
+    test('prepareForTest бросает StateError если retain без meta', () async {
+      final storage = _FakeStorage();
+      final retainDevice = _TestDevice(
+        name: 'dev_a',
+        retains: {'mode': '0'},
+      );
+      final orchestrator = await WbOrchestratorBuilder.test(
+        mqtt: _FakeWbMqttClient(),
+        storage: storage,
+      ).build(devices: [retainDevice]);
+
+      expect(() => orchestrator.prepareForTest(), throwsA(isA<StateError>()));
     });
 
     test('повторный run бросает StateError', () async {
@@ -228,6 +277,8 @@ void main() {
 
     test('сообщение на динамический алиас маршрутизируется в устройство', () {
       orchestrator.prepareForTest();
+      deviceA.updateFieldCalls = 0;
+      deviceA.executeCalls = 0;
 
       orchestrator.dispatchMessage(
         const WbMqttMessage(
@@ -281,9 +332,12 @@ void main() {
       );
       wbDebugLog('dev_a', 'debug message');
 
-      expect(mqtt.publishedTopics.length, 1);
-      expect(mqtt.publishedTopics.first, startsWith('debug/dev_a/'));
-      expect(mqtt.publishedPayloads, ['debug message']);
+      final debugTopics = mqtt.publishedTopics
+          .where((topic) => topic.startsWith('debug/dev_a/'))
+          .toList();
+      expect(debugTopics.length, 1);
+      expect(debugTopics.first, startsWith('debug/dev_a/'));
+      expect(mqtt.publishedPayloads.last, 'debug message');
     });
 
     test('wbDebugLog молчит после выключения флага', () {
@@ -298,8 +352,11 @@ void main() {
       );
       wbDebugLog('dev_a', 'second');
 
-      expect(mqtt.publishedTopics.length, 1);
-      expect(mqtt.publishedPayloads, ['first']);
+      final debugTopics = mqtt.publishedTopics
+          .where((topic) => topic.startsWith('debug/dev_a/'))
+          .toList();
+      expect(debugTopics.length, 1);
+      expect(mqtt.publishedPayloads.last, 'first');
     });
 
     test('сообщения debug/dev_a/timestamp игнорируются', () {
@@ -313,7 +370,10 @@ void main() {
       );
       wbDebugLog('dev_a', 'msg');
 
-      expect(mqtt.publishedTopics, isEmpty);
+      final debugTopics = mqtt.publishedTopics
+          .where((topic) => topic.startsWith('debug/dev_a/'))
+          .toList();
+      expect(debugTopics, isEmpty);
     });
   });
 }
@@ -353,13 +413,23 @@ class _FakeWbMqttClient implements WbMqttClient {
   }
 }
 
-class _TestDevice implements IDevice {
+final class _TestDevice extends IDevice {
   _TestDevice({
     required this.name,
     Set<String>? inputs,
     Set<String>? outputs,
-  }) : _inputs = inputs ?? const {},
-       _outputs = outputs ?? const {};
+    Map<String, Map<String, dynamic>>? meta,
+    Map<String, Object?>? retains,
+  }) {
+    register(
+      _TestDevicePart(
+        inputs: inputs ?? const {},
+        outputs: outputs ?? const {},
+        meta: meta ?? const {},
+        retains: retains ?? const {},
+      ),
+    );
+  }
 
   @override
   final String name;
@@ -367,10 +437,6 @@ class _TestDevice implements IDevice {
   @override
   final WbLocalizedTitle? title = null;
 
-  final Set<String> _inputs;
-  final Set<String> _outputs;
-
-  int initCalls = 0;
   int updateFieldCalls = 0;
   int executeCalls = 0;
   WbMqttMessage? lastMessage;
@@ -381,21 +447,36 @@ class _TestDevice implements IDevice {
   }
 
   @override
-  void init() {
-    initCalls++;
-  }
-
-  @override
-  Set<String> inputs() => _inputs;
-
-  @override
-  Set<String> outputs() => _outputs;
-
-  @override
   void updateField(WbMqttMessage mess) {
     updateFieldCalls++;
     lastMessage = mess;
   }
+}
+
+final class _TestDevicePart extends PartOfIDevice {
+  _TestDevicePart({
+    required this.inputs,
+    required this.outputs,
+    required this.meta,
+    required this.retains,
+  });
+
+  final Set<String> inputs;
+  final Set<String> outputs;
+  final Map<String, Map<String, dynamic>> meta;
+  final Map<String, Object?> retains;
+
+  @override
+  Set<String> addInputs() => inputs;
+
+  @override
+  Set<String> addOutputs() => outputs;
+
+  @override
+  Map<String, Map<String, dynamic>> addMeta() => meta;
+
+  @override
+  Map<String, Object?> addRetains() => retains;
 }
 
 class _FakeStorage implements WbStorage {

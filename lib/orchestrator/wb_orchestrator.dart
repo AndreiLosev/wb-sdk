@@ -1,10 +1,13 @@
 import 'package:meta/meta.dart';
+import 'package:wb_sdk/coder.dart';
 import 'package:wb_sdk/contracts/idevice.dart';
 import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
 import 'package:wb_sdk/contracts/wb_storage.dart';
 import 'package:wb_sdk/debug/wb_debug_log.dart';
 import 'package:wb_sdk/mqtt/wb_client.dart';
 import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
+import 'package:wb_sdk/types/wb_control_type.dart';
+import 'package:wb_sdk/wb_meta_json.dart';
 
 late void Function(String topic, String payload, {bool retained}) wbPublish;
 
@@ -107,9 +110,8 @@ class WbOrchestrator {
     }
     _state = _OrchestratorState.prepared;
 
-    for (final device in _devices.values) {
-      device.init();
-    }
+    _publishDeviceMeta();
+    _restoreRetains();
 
     for (final topic in _routes.keys) {
       _mqtt.subscribe(topic);
@@ -126,6 +128,10 @@ class WbOrchestrator {
     }
     for (final topic in WbDebugLog.subscriptionTopics(_devices.keys)) {
       _mqtt.subscribe(topic);
+    }
+
+    for (final device in _devices.values) {
+      device.execute();
     }
   }
 
@@ -209,6 +215,64 @@ class WbOrchestrator {
   @visibleForTesting
   void prepareForTest() {
     _prepare();
+  }
+
+  void _publishDeviceMeta() {
+    for (final device in _devices.values) {
+      wbPublish(
+        '${device.name}/meta',
+        WbMetaJson.device(device.title),
+        retained: true,
+      );
+      for (final entry in device.meta().entries) {
+        wbPublish(
+          '${device.name}/${entry.key}/meta',
+          WbControlType.meta(entry.value),
+          retained: true,
+        );
+      }
+    }
+  }
+
+  void _restoreRetains() {
+    final storage = _storage;
+    if (storage == null) {
+      return;
+    }
+
+    for (final device in _devices.values) {
+      for (final entry in device.retains().entries) {
+        final controlMeta = device.meta()[entry.key];
+        if (controlMeta == null) {
+          throw StateError(
+            'Retain field "${entry.key}" has no meta on device "${device.name}"',
+          );
+        }
+
+        final type = _controlTypeFromMeta(controlMeta['type']);
+        final value = storage.get('${device.name}.${entry.key}', entry.value);
+        final payload = WbValueCodec.encode(value, type);
+
+        device.updateField(
+          WbMqttMessage(
+            topic: '${device.name}/${entry.key}/on',
+            payload: payload,
+          ),
+        );
+      }
+    }
+  }
+
+  WbControlType _controlTypeFromMeta(Object? typeValue) {
+    if (typeValue is! String) {
+      throw StateError('Control meta.type must be a String');
+    }
+    for (final type in WbControlType.values) {
+      if (type.mqttValue == typeValue) {
+        return type;
+      }
+    }
+    throw StateError('Unknown control meta.type: $typeValue');
   }
 
   void _makeWpPublish() {

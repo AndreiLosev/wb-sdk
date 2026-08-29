@@ -128,7 +128,7 @@ void main() {
     });
 
     test('пример класса с аннотациями компилируется', () {
-      final roomLight = _RoomLight(_FakeWbMqttClient());
+      final roomLight = _RoomLight();
       expect(roomLight.switchState, isFalse);
       expect(roomLight.lamp, isFalse);
       expect(roomLight.power, 0);
@@ -137,26 +137,11 @@ void main() {
   });
 }
 
-class _FakeWbMqttClient implements WbMqttClient {
-  @override
-  Stream<WbMqttMessage> get messages => const Stream.empty();
-
-  @override
-  void publish(String topic, String payload, {bool retained = false}) {}
-
-  @override
-  void subscribe(String topic) {}
-
-  @override
-  void unsubscribe(String topic) {}
-}
-
 @VirtualDevice()
-class _RoomLight implements IDevice {
-  _RoomLight(this.mqtt);
-
-  @override
-  final WbMqttClient mqtt;
+final class _RoomLight extends IDevice {
+  _RoomLight() {
+    register(_RoomLightPart());
+  }
 
   @override
   final String name = 'room_light';
@@ -202,16 +187,6 @@ class _RoomLight implements IDevice {
 
   @override
   void execute() {}
-
-  @override
-  void init() {}
-
-  @override
-  Set<String> inputs() => const {};
-
-  @override
-  Set<String> outputs() => const {};
-
-  @override
-  void updateField(WbMqttMessage mess) {}
 }
+
+final class _RoomLightPart extends PartOfIDevice {}

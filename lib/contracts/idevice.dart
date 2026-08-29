@@ -8,7 +8,7 @@ abstract base class IDevice {
   final _outputs = <String>{};
   final _updateFields = <UpdateFieldFn>[];
   final _parts = <Type, PartOfIDevice>{};
-  final _retains = <String>{};
+  final _retains = <String, Object?>{};
 
   String get name;
 
@@ -22,7 +22,7 @@ abstract base class IDevice {
 
   Set<String> outputs() => _outputs;
 
-  Set<String> retains() => _retains;
+  Map<String, Object?> retains() => _retains;
 
   void updateField(WbMqttMessage mess) {
     final [device, control] = mess.topic.split('/');
@@ -46,6 +46,7 @@ abstract base class IDevice {
     if (fn != null) {
       _updateFields.add(fn);
     }
+    _retains.addAll(part.addRetains());
   }
 
   T part<T extends PartOfIDevice>() => _parts[T] as T;
@@ -56,5 +57,5 @@ abstract base class PartOfIDevice {
   Set<String> addOutputs() => {};
   Map<String, Map<String, dynamic>> addMeta() => {};
   UpdateFieldFn? addUpdateFields() => null;
-  Set<String> addRetains() => {};
+  Map<String, Object?> addRetains() => {};
 }
