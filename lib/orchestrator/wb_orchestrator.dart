@@ -1,69 +1,77 @@
 import 'package:meta/meta.dart';
-import 'package:wb_sdk/coder.dart';
 import 'package:wb_sdk/contracts/idevice.dart';
 import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
 import 'package:wb_sdk/contracts/wb_storage.dart';
 import 'package:wb_sdk/debug/wb_debug_log.dart';
 import 'package:wb_sdk/mqtt/wb_client.dart';
 import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
-import 'package:wb_sdk/types/wb_control_type.dart';
-import 'package:wb_sdk/wb_meta_json.dart';
+
+import 'device_topic_router.dart';
+import 'io_mapping_sync.dart';
+import 'orchestrator_bootstrap.dart';
 
 late void Function(String topic, String payload, {bool retained}) wbPublish;
 
 late T Function<T extends IDevice?>(String devName) getDevice;
-
-class _TopicRoute {
-  const _TopicRoute({required this.device, required this.isInput});
-
-  final IDevice device;
-  final bool isInput;
-}
 
 enum _OrchestratorState { idle, prepared, running, stopped }
 
 /// Управляет [IDevice]: подписки, диспетчеризация MQTT, вызов [IDevice.execute].
 class WbOrchestrator {
   WbOrchestrator({
-    required this._mqtt,
+    required WbMqttClient mqtt,
     required List<IDevice> devices,
-    WbTopicMapping? topicMapping,
-    this._storage,
-  }) : _topicMapping = topicMapping ?? WbTopicMapping(),
-       _routes = _buildRoutes(devices),
-       _devices = _buildDevices(devices),
-       _debugLog = WbDebugLog(mqtt: _mqtt) {
+    required WbTopicMapping topicMapping,
+    WbStorage? storage,
+  }) : _mqtt = mqtt,
+       _topicMapping = topicMapping,
+       _router = DeviceTopicRouter.fromDevices(devices),
+       _devices = Map.fromEntries(devices.map((e) => MapEntry(e.name, e))),
+       _ioMappingSync = IoMappingSync(
+         mqtt: mqtt,
+         topicMapping: topicMapping,
+         storage: storage,
+       ),
+       _bootstrap = OrchestratorBootstrap(),
+       _debugLog = WbDebugLog(mqtt: mqtt),
+       _storage = storage {
     _makeWpPublish();
     _makeWbDebugLog();
     _makeGetDevice();
   }
 
+  /// Собирает [WbOrchestrator] из готовых зависимостей (без I/O).
+  static WbOrchestrator assemble({
+    required WbMqttClient mqtt,
+    required List<IDevice> devices,
+    WbTopicMapping? defaults,
+    WbStorage? storage,
+  }) {
+    final mapping = WbTopicMapping(
+      inputs: defaults?.inputs ?? {},
+      outputs: defaults?.outputs ?? {},
+    );
+    if (storage != null) {
+      mapping.load(storage, defaults: defaults);
+    }
+    return WbOrchestrator(
+      mqtt: mqtt,
+      devices: devices,
+      topicMapping: mapping,
+      storage: storage,
+    );
+  }
+
   final WbMqttClient _mqtt;
-  final Map<String, _TopicRoute> _routes;
+  final DeviceTopicRouter _router;
   final Map<String, IDevice> _devices;
+  final IoMappingSync _ioMappingSync;
+  final OrchestratorBootstrap _bootstrap;
   final WbDebugLog _debugLog;
   final WbTopicMapping _topicMapping;
   final WbStorage? _storage;
 
   _OrchestratorState _state = _OrchestratorState.idle;
-
-  static Map<String, _TopicRoute> _buildRoutes(List<IDevice> devices) {
-    final routes = <String, _TopicRoute>{};
-
-    for (final device in devices) {
-      for (final topic in device.inputs()) {
-        routes[topic] = _TopicRoute(device: device, isInput: true);
-      }
-      for (final topic in device.outputs()) {
-        routes[topic] = _TopicRoute(device: device, isInput: false);
-      }
-    }
-
-    return routes;
-  }
-
-  static Map<String, IDevice> _buildDevices(List<IDevice> devices) =>
-      Map.fromEntries(devices.map((e) => MapEntry(e.name, e)));
 
   /// Инициализирует устройства, подписывается на топики и обрабатывает сообщения.
   Future<void> run() async {
@@ -74,7 +82,7 @@ class WbOrchestrator {
       throw StateError('WbOrchestrator already stopped');
     }
 
-    _prepare();
+    prepare();
     _state = _OrchestratorState.running;
 
     try {
@@ -82,7 +90,7 @@ class WbOrchestrator {
         if (_state == _OrchestratorState.stopped) {
           break;
         }
-        _handleMessage(message);
+        handleMessage(message);
       }
     } finally {
       if (_state != _OrchestratorState.stopped) {
@@ -104,60 +112,35 @@ class WbOrchestrator {
     }
   }
 
-  void _prepare() {
+  @visibleForTesting
+  void prepare() {
     if (_state != _OrchestratorState.idle) {
       return;
     }
     _state = _OrchestratorState.prepared;
 
-    _publishDeviceMeta();
-    _restoreRetains();
-
-    for (final topic in _routes.keys) {
-      _mqtt.subscribe(topic);
-    }
-    for (final topic in _topicMapping.inputSubscriptionTopics) {
-      _mqtt.subscribe(topic);
-    }
-
-    if (_storage != null) {
-      _topicMapping.publishAll(_mqtt);
-    }
-    for (final topic in WbTopicMapping.ioMappingSubscriptionTopics) {
-      _mqtt.subscribe(topic);
-    }
-    for (final topic in WbDebugLog.subscriptionTopics(_devices.keys)) {
-      _mqtt.subscribe(topic);
-    }
-
-    for (final device in _devices.values) {
-      device.execute();
-    }
+    _bootstrap.prepare(
+      mqtt: _mqtt,
+      devices: _devices,
+      topicMapping: _topicMapping,
+      routeTopics: _router.topics,
+      storage: _storage,
+    );
   }
 
-  void _handleMessage(WbMqttMessage message) {
+  @visibleForTesting
+  void handleMessage(WbMqttMessage message) {
     if (message.topic.startsWith('debug/')) {
       _handleDebugMessage(message);
       return;
     }
 
     if (message.topic.startsWith('io_mapping/')) {
-      _handleIoMappingMessage(message);
+      _ioMappingSync.handle(message);
       return;
     }
 
-    final topic = _topicMapping.resolveInputTopic(message.topic);
-    final route = _routes[topic];
-    if (route == null) {
-      return;
-    }
-
-    route.device.updateField(
-      WbMqttMessage(topic: topic, payload: message.payload),
-    );
-    if (route.isInput) {
-      route.device.execute();
-    }
+    _router.route(message, _topicMapping);
   }
 
   void _handleDebugMessage(WbMqttMessage message) {
@@ -166,114 +149,6 @@ class WbOrchestrator {
       return;
     }
     _debugLog.updateFlag(parts[1], message.payload);
-  }
-
-  void _handleIoMappingMessage(WbMqttMessage message) {
-    final parsed = WbTopicMapping.parseIoMappingTopic(message.topic);
-    if (parsed == null) {
-      return;
-    }
-
-    final previousInputKey = parsed.isInput ? parsed.key : null;
-    final changed = _topicMapping.applyIoMapping(
-      isInput: parsed.isInput,
-      key: parsed.key,
-      value: message.payload,
-    );
-    if (!changed) {
-      return;
-    }
-
-    if (parsed.isInput) {
-      _syncInputAliasSubscription(previousInputKey, message.payload);
-    }
-
-    final storage = _storage;
-    if (storage != null) {
-      _topicMapping.save(storage);
-    }
-  }
-
-  void _syncInputAliasSubscription(String? alias, String value) {
-    if (value.isEmpty) {
-      if (alias != null) {
-        _mqtt.unsubscribe(alias);
-      }
-      return;
-    }
-
-    if (alias != null) {
-      _mqtt.subscribe(alias);
-    }
-  }
-
-  @visibleForTesting
-  void dispatchMessage(WbMqttMessage message) {
-    _handleMessage(message);
-  }
-
-  @visibleForTesting
-  void prepareForTest() {
-    _prepare();
-  }
-
-  void _publishDeviceMeta() {
-    for (final device in _devices.values) {
-      wbPublish(
-        '${device.name}/meta',
-        WbMetaJson.device(device.title),
-        retained: true,
-      );
-      for (final entry in device.meta().entries) {
-        wbPublish(
-          '${device.name}/${entry.key}/meta',
-          WbControlType.meta(entry.value),
-          retained: true,
-        );
-      }
-    }
-  }
-
-  void _restoreRetains() {
-    final storage = _storage;
-    if (storage == null) {
-      return;
-    }
-
-    for (final device in _devices.values) {
-      for (final entry in device.retains().entries) {
-        final controlMeta = device.meta()[entry.key];
-        if (controlMeta == null) {
-          throw StateError(
-            'Retain field "${entry.key}" has no meta on device "${device.name}"',
-          );
-        }
-
-        final type = _controlTypeFromMeta(controlMeta['type']);
-        final value = storage.get('${device.name}.${entry.key}', entry.value);
-        final payload = WbValueCodec.encode(value, type);
-
-        device.updateField(
-          WbMqttMessage(
-            topic: '${device.name}/${entry.key}/on',
-            payload: payload,
-          ),
-        );
-        wbPublish('${device.name}/${entry.key}/on', payload);
-      }
-    }
-  }
-
-  WbControlType _controlTypeFromMeta(Object? typeValue) {
-    if (typeValue is! String) {
-      throw StateError('Control meta.type must be a String');
-    }
-    for (final type in WbControlType.values) {
-      if (type.mqttValue == typeValue) {
-        return type;
-      }
-    }
-    throw StateError('Unknown control meta.type: $typeValue');
   }
 
   void _makeWpPublish() {
