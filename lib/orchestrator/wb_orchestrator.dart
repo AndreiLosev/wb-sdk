@@ -8,7 +8,7 @@ import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
 
 late void Function(String topic, String payload, {bool retained}) wbPublish;
 
-late T Function<T extends IDevice>(String devName) getDevice;
+late T Function<T extends IDevice?>(String devName) getDevice;
 
 class _TopicRoute {
   const _TopicRoute({required this.device, required this.isInput});
@@ -159,7 +159,6 @@ class WbOrchestrator {
     if (parts.length != 2 || parts[0] != 'debug') {
       return;
     }
-
     _debugLog.updateFlag(parts[1], message.payload);
   }
 
@@ -228,8 +227,5 @@ class WbOrchestrator {
     getDevice = _getDevice;
   }
 
-  T _getDevice<T extends IDevice>(String devName) {
-    print([_devices, devName]);
-    return _devices[devName]! as T;
-  }
+  T _getDevice<T extends IDevice?>(String devName) => _devices[devName] as T;
 }

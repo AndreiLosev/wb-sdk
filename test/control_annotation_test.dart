@@ -26,6 +26,19 @@ void main() {
       expect(fromEnum, containsAll(WbControlType.mqttValues));
       expect(WbControlType.mqttValues, containsAll(fromEnum));
     });
+
+    test('meta сериализует поля контрола в JSON', () {
+      expect(
+        WbControlType.switch_.meta({
+          'type': 'switch',
+          'title': {'en': 'Lamp', 'ru': 'Лампа'},
+          'order': 2,
+          'readonly': false,
+          'hidden': false,
+        }),
+        '{"type":"switch","title":{"en":"Lamp","ru":"Лампа"},"order":2,"readonly":false,"hidden":false}',
+      );
+    });
   });
 
   group('WbLocalizedTitle', () {

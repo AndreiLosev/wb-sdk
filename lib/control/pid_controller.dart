@@ -18,7 +18,6 @@ class PidController extends PidControllerBase {
     this.autoUpdateDelay = const Duration(seconds: 10),
   }) {
     _resetTimer();
-    _lastCallTime = DateTime.timestamp().millisecondsSinceEpoch;
   }
 
   static const double _minDt = 1e-6;
@@ -29,7 +28,7 @@ class PidController extends PidControllerBase {
 
   Timer? _timer;
 
-  late int _lastCallTime;
+  int _lastCallTime = 0;
 
   double calculate({required double processVariable, double? setpoint}) {
     final result = update(
@@ -46,7 +45,7 @@ class PidController extends PidControllerBase {
   @override
   void reset() {
     super.reset();
-    _lastCallTime = DateTime.timestamp().millisecondsSinceEpoch;
+    _lastCallTime = 0;
     _timer?.cancel();
     _timer = null;
   }
@@ -54,11 +53,16 @@ class PidController extends PidControllerBase {
   void dispose() {
     _timer?.cancel();
     _timer = null;
-    _lastCallTime = DateTime.timestamp().millisecondsSinceEpoch;
+    _lastCallTime = 0;
   }
 
   double _getTimeDiff() {
     final now = DateTime.timestamp().millisecondsSinceEpoch;
+    if (_lastCallTime == 0) {
+      _lastCallTime = now;
+      return _minDt;
+    }
+
     final elapsedMs = now - _lastCallTime;
     _lastCallTime = now;
     final elapsed = elapsedMs / 1000;

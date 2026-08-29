@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Типы контролов Wiren Board MQTT.
 ///
 /// См. https://github.com/wirenboard/conventions#3-control-types
@@ -17,6 +19,9 @@ enum WbControlType {
 
   /// Значение для поля `type` в JSON метаданных контрола.
   final String mqttValue;
+
+  /// Сериализует meta контрола в JSON-строку для MQTT.
+  String meta(Map<String, dynamic> fields) => jsonEncode(fields);
 
   /// Все допустимые значения `type` из conventions.
   static const mqttValues = [
