@@ -29,7 +29,7 @@ void main() {
 
     test('meta сериализует поля контрола в JSON', () {
       expect(
-        WbControlType.switch_.meta({
+        WbControlType.meta({
           'type': 'switch',
           'title': {'en': 'Lamp', 'ru': 'Лампа'},
           'order': 2,
