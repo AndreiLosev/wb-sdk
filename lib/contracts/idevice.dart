@@ -7,6 +7,8 @@ abstract interface class IDevice {
 
   void execute();
 
+  Map<String, Map<String, dynamic>> get controlMetaJson;
+
   void init();
 
   Set<String> inputs();
