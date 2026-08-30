@@ -60,10 +60,14 @@ abstract class IDevice {
 }
 
 abstract class PartOfIDevice {
+  late final IDevice device;
+
   Set<String> addInputs() => {};
   Set<String> addOutputs() => {};
   Map<String, Map<String, dynamic>> addMeta() => {};
   UpdateFieldFn? addUpdateFields() => null;
   Map<String, Object?> addRetains() => {};
-  void setDevice(IDevice device);
+  void setDevice(IDevice device) {
+    this.device = device;
+  }
 }

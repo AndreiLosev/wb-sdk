@@ -17,10 +17,16 @@ class DeviceTopicRouter {
 
     for (final device in devices) {
       for (final topic in device.inputs()) {
-        routes[topic] = TopicRoute(device: device, isInput: true);
+        routes['${device.name}/$topic'] = TopicRoute(
+          device: device,
+          isInput: true,
+        );
       }
       for (final topic in device.outputs()) {
-        routes[topic] = TopicRoute(device: device, isInput: false);
+        routes['${device.name}/$topic'] = TopicRoute(
+          device: device,
+          isInput: false,
+        );
       }
     }
 
