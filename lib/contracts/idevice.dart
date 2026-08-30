@@ -43,7 +43,9 @@ abstract class IDevice {
   }
 
   void register<T extends PartOfIDevice>(T part) {
+    if (_parts[T] is T) return;
     _parts[T] = part;
+    part.setDevice(this);
     _inputs.addAll(part.addInputs());
     _outputs.addAll(part.addOutputs());
     _meta.addAll(part.addMeta());
@@ -63,4 +65,5 @@ abstract class PartOfIDevice {
   Map<String, Map<String, dynamic>> addMeta() => {};
   UpdateFieldFn? addUpdateFields() => null;
   Map<String, Object?> addRetains() => {};
+  void setDevice(IDevice device);
 }
