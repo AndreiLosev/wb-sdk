@@ -48,8 +48,7 @@ class OrchestratorBootstrap {
         WbMetaJson.device(device.title),
         retained: true,
       );
-      for (final (i, entry) in device.meta().entries.indexed) {
-        entry.value.order = i + 1;
+      for (final entry in device.meta().entries) {
         entry.value.sender = runtimeType.toString();
         wbPublish(
           '${device.name}/${entry.key}/meta',

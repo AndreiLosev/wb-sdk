@@ -48,7 +48,13 @@ abstract class IDevice {
     part.setDevice(this);
     _inputs.addAll(part.addInputs());
     _outputs.addAll(part.addOutputs());
-    _meta.addAll(part.addMeta());
+
+    final oreder = meta().length;
+    for (final (i, meta) in part.addMeta().entries.indexed) {
+      meta.value.order = (meta.value.order ?? i) + oreder;
+      _meta[meta.key] = meta.value;
+    }
+
     final fn = part.addUpdateFields();
     if (fn != null) {
       _updateFields.add(fn);

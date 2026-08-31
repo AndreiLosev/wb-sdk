@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:wb_sdk/contracts/idevice.dart';
 import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
 import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
@@ -44,13 +42,10 @@ class DeviceTopicRouter {
 
   void route(WbMqttMessage message, WbTopicMapping topicMapping) {
     final topic = topicMapping.resolveInputTopic(message.topic);
-    var route = _routes[topic];
+    final route = _routes[topic] ?? _resolveGenericTopic(topic);
 
     if (route == null) {
-      route = _resolveGenericTopic(topic);
-      if (route == null) {
-        return;
-      }
+      return;
     }
     route.device.updateField(
       WbMqttMessage(topic: topic, payload: message.payload),
