@@ -16,12 +16,12 @@ void main() {
       mqtt = _FakeWbMqttClient();
       deviceA = _TestDevice(
         name: 'dev_a',
-        inputs: {'dev_a/temp/on'},
-        outputs: {'dev_a/lamp/on'},
+        inputs: {'temp/on'},
+        outputs: {'lamp/on'},
       );
       deviceB = _TestDevice(
         name: 'dev_b',
-        inputs: {'dev_b/switch/on'},
+        inputs: {'switch/on'},
         outputs: {},
       );
       orchestrator = WbOrchestrator.assemble(
@@ -75,17 +75,17 @@ void main() {
       storage.put('dev_a.mode', '1');
       final retainDevice = _TestDevice(
         name: 'dev_a',
-        inputs: {'dev_a/temp/on'},
-        outputs: {'dev_a/lamp/on'},
+        inputs: {'temp/on'},
+        outputs: {'lamp/on'},
         meta: {
-          'lamp': {
-            'type': 'switch',
-            'title': {'en': 'Lamp'},
-          },
-          'mode': {
-            'type': 'text',
-            'title': {'en': 'Mode'},
-          },
+          'lamp': ControlMeta(
+            type: WbControlType.switch_,
+            title: WbLocalizedTitle(en: 'Lamp'),
+          ),
+          'mode': ControlMeta(
+            type: WbControlType.text,
+            title: WbLocalizedTitle(en: 'Mode'),
+          ),
         },
         retains: {'mode': '0'},
       );
@@ -163,8 +163,8 @@ void main() {
       mqtt = _FakeWbMqttClient();
       deviceA = _TestDevice(
         name: 'dev_a',
-        inputs: {'dev_a/temp/on'},
-        outputs: {'dev_a/lamp/on'},
+        inputs: {'temp/on'},
+        outputs: {'lamp/on'},
       );
       orchestrator = WbOrchestrator.assemble(
         mqtt: mqtt,
@@ -211,8 +211,8 @@ void main() {
       storage = _FakeStorage();
       deviceA = _TestDevice(
         name: 'dev_a',
-        inputs: {'dev_a/temp/on'},
-        outputs: {'dev_a/lamp/on'},
+        inputs: {'temp/on'},
+        outputs: {'lamp/on'},
       );
       orchestrator = WbOrchestrator.assemble(
         mqtt: mqtt,
@@ -399,7 +399,7 @@ final class _TestDevice extends IDevice {
     required this.name,
     Set<String>? inputs,
     Set<String>? outputs,
-    Map<String, Map<String, dynamic>>? meta,
+    Map<String, ControlMeta>? meta,
     Map<String, Object?>? retains,
   }) {
     register(
@@ -444,7 +444,7 @@ final class _TestDevicePart extends PartOfIDevice {
 
   final Set<String> inputs;
   final Set<String> outputs;
-  final Map<String, Map<String, dynamic>> meta;
+  final Map<String, ControlMeta> meta;
   final Map<String, Object?> retains;
 
   @override
@@ -454,7 +454,7 @@ final class _TestDevicePart extends PartOfIDevice {
   Set<String> addOutputs() => outputs;
 
   @override
-  Map<String, Map<String, dynamic>> addMeta() => meta;
+  Map<String, ControlMeta> addMeta() => meta;
 
   @override
   Map<String, Object?> addRetains() => retains;

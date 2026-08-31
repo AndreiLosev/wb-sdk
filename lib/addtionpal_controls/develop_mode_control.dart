@@ -5,9 +5,6 @@ class DevelopModeControl extends PartOfIDevice {
 
   final bool hidden;
 
-  Map<String, ControlMeta>? _meta;
-  Map<String, ControlMeta>? _devMeta;
-
   new({this.hidden = false});
 
   @override
@@ -25,14 +22,6 @@ class DevelopModeControl extends PartOfIDevice {
       ),
     };
   }
-
-  void _publishMeta(Map<String, Map<String, dynamic>> meta) {
-    for (final key in meta.keys) {
-      wbPublish('${device.name}/$key/meta', WbControlType.meta(meta[key]!));
-    }
-  }
-
-  void _prepare() {}
 
   bool _update(String name, String payload) {
     return false;

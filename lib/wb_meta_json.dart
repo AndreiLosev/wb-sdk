@@ -74,7 +74,7 @@ class ControlMeta {
     'precision': ?precision,
     'readonly': readonly,
     'hidden': hidden,
-    'enumTitles': ?_serializeEnumTitles(enumTitles!),
+    'enumTitles': ?_serializeEnumTitles(enumTitles),
     'order': ?order,
     'sender': ?sender,
   });

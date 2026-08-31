@@ -54,6 +54,57 @@ void main() {
     });
   });
 
+  group('ControlMeta', () {
+    test('toJson сериализует поля контрола', () {
+      final meta = ControlMeta(
+        type: WbControlType.switch_,
+        title: WbLocalizedTitle(en: 'Lamp', ru: 'Лампа'),
+        order: 2,
+        readonly: false,
+        hidden: false,
+      );
+
+      expect(
+        meta.toJson(),
+        '{"type":"switch","title":{"en":"Lamp","ru":"Лампа"},"readonly":false,"hidden":false,"order":2}',
+      );
+    });
+
+    test('fromJson и round-trip для базового контрола', () {
+      final json =
+          '{"type":"switch","title":{"en":"Lamp","ru":"Лампа"},"readonly":false,"hidden":false,"order":2}';
+      final meta = ControlMeta.fromJson(json);
+
+      expect(meta.type, WbControlType.switch_);
+      expect(meta.title?.en, 'Lamp');
+      expect(meta.title?.ru, 'Лампа');
+      expect(meta.order, 2);
+      expect(meta.readonly, isFalse);
+      expect(meta.hidden, isFalse);
+      expect(meta.toJson(), json);
+    });
+
+    test('toJson сериализует units, min, max, precision и enumTitles', () {
+      final meta = ControlMeta(
+        type: WbControlType.value,
+        title: WbLocalizedTitle(en: 'Power', ru: 'Мощность'),
+        units: 'W',
+        min: 0,
+        max: 5000,
+        precision: 0.1,
+        enumTitles: {
+          '0': WbLocalizedTitle(en: 'Off', ru: 'Выкл'),
+          '1': WbLocalizedTitle(en: 'On', ru: 'Вкл'),
+        },
+      );
+
+      expect(
+        meta.toJson(),
+        '{"type":"value","title":{"en":"Power","ru":"Мощность"},"units":"W","min":0,"max":5000,"precision":0.1,"readonly":false,"hidden":false,"enumTitles":{"0":{"en":"Off","ru":"Выкл"},"1":{"en":"On","ru":"Вкл"}}}',
+      );
+    });
+  });
+
   group('WbMetaJson', () {
     test('собирает meta устройства', () {
       const title = WbLocalizedTitle(en: 'Room Light', ru: 'Освещение');
