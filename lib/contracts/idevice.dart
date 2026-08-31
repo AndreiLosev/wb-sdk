@@ -55,10 +55,7 @@ abstract class IDevice {
       _meta[meta.key] = meta.value;
     }
 
-    final fn = part.addUpdateFields();
-    if (fn != null) {
-      _updateFields.add(fn);
-    }
+    _updateFields.add(part.updateFields);
     _retains.addAll(part.addRetains());
   }
 
@@ -71,7 +68,7 @@ abstract class PartOfIDevice {
   Set<String> addInputs() => {};
   Set<String> addOutputs() => {};
   Map<String, ControlMeta> addMeta() => {};
-  UpdateFieldFn? addUpdateFields() => null;
+  bool updateFields(String control, String payload) => false;
   Map<String, Object?> addRetains() => {};
   void setDevice(IDevice device) {
     this.device = device;
