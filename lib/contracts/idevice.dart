@@ -3,7 +3,7 @@ import 'package:wb_sdk/wb_sdk.dart';
 typedef UpdateFieldFn = bool Function(String control, String payload);
 
 abstract class IDevice {
-  final _meta = <String, Map<String, dynamic>>{};
+  final _meta = <String, ControlMeta>{};
   final _inputs = <String>{};
   final _outputs = <String>{};
   final _updateFields = <UpdateFieldFn>[];
@@ -16,7 +16,7 @@ abstract class IDevice {
 
   void execute();
 
-  Map<String, Map<String, dynamic>> meta() => _meta;
+  Map<String, ControlMeta> meta() => _meta;
 
   Set<String> inputs() => _inputs;
 
@@ -64,7 +64,7 @@ abstract class PartOfIDevice {
 
   Set<String> addInputs() => {};
   Set<String> addOutputs() => {};
-  Map<String, Map<String, dynamic>> addMeta() => {};
+  Map<String, ControlMeta> addMeta() => {};
   UpdateFieldFn? addUpdateFields() => null;
   Map<String, Object?> addRetains() => {};
   void setDevice(IDevice device) {

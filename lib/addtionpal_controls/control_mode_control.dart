@@ -6,5 +6,5 @@ class ControlModeControl extends PartOfIDevice {
   static String name = 'control_mode';
 
   @override
-  Set<String> addInputs() => {name};
+  Set<String> addInputs() => {'$name/on'};
 }

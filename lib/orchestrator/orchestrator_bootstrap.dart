@@ -4,7 +4,6 @@ import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
 import 'package:wb_sdk/contracts/wb_storage.dart';
 import 'package:wb_sdk/debug/wb_debug_log.dart';
 import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
-import 'package:wb_sdk/types/wb_control_type.dart';
 import 'package:wb_sdk/wb_meta_json.dart';
 
 import 'wb_orchestrator.dart';
@@ -49,10 +48,12 @@ class OrchestratorBootstrap {
         WbMetaJson.device(device.title),
         retained: true,
       );
-      for (final entry in device.meta().entries) {
+      for (final (i, entry) in device.meta().entries.indexed) {
+        entry.value.order = i + 1;
+        entry.value.sender = runtimeType.toString();
         wbPublish(
           '${device.name}/${entry.key}/meta',
-          WbControlType.meta(entry.value),
+          entry.value.toJson(),
           retained: true,
         );
       }
@@ -73,7 +74,7 @@ class OrchestratorBootstrap {
           );
         }
 
-        final type = _controlTypeFromMeta(controlMeta['type']);
+        final type = controlMeta.type;
         final value = storage.get('${device.name}.${entry.key}', entry.value);
         final payload = WbValueCodec.encode(value, type);
 
@@ -86,17 +87,5 @@ class OrchestratorBootstrap {
         wbPublish('${device.name}/${entry.key}/on', payload);
       }
     }
-  }
-
-  WbControlType _controlTypeFromMeta(Object? typeValue) {
-    if (typeValue is! String) {
-      throw StateError('Control meta.type must be a String');
-    }
-    for (final type in WbControlType.values) {
-      if (type.mqttValue == typeValue) {
-        return type;
-      }
-    }
-    throw StateError('Unknown control meta.type: $typeValue');
   }
 }

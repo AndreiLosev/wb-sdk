@@ -5,26 +5,24 @@ class DevelopModeControl extends PartOfIDevice {
 
   final bool hidden;
 
-  Map<String, Map<String, dynamic>>? _meta;
-  Map<String, Map<String, dynamic>>? _devMeta;
+  Map<String, ControlMeta>? _meta;
+  Map<String, ControlMeta>? _devMeta;
 
   new({this.hidden = false});
 
   @override
   Set<String> addInputs() {
-    return {name};
+    return {'$name/on', '+/meta'};
   }
 
   @override
-  Map<String, Map<String, dynamic>> addMeta() {
+  Map<String, ControlMeta> addMeta() {
     return {
-      name: {
-        'type': WbControlType.switch_.mqttValue,
-        'title': {'en': 'Development mode', 'ru': 'Режим разработки'},
-        'order': device.meta().length + 1,
-        'readonly': false,
-        'hidden': hidden,
-      },
+      name: ControlMeta(
+        type: WbControlType.switch_,
+        title: WbLocalizedTitle(en: 'Development mode', ru: 'Режим разработки'),
+        hidden: hidden,
+      ),
     };
   }
 
@@ -34,27 +32,9 @@ class DevelopModeControl extends PartOfIDevice {
     }
   }
 
-  void _prepare() {
-    _meta ??= device.meta();
-    _devMeta ??= Map.fromEntries(
-      device.meta().entries.map(
-        (e) =>
-            MapEntry(e.key, {...e.value, 'readonly': false, 'hidden': false}),
-      ),
-    );
-  }
+  void _prepare() {}
 
   bool _update(String name, String payload) {
-    if (name != DevelopModeControl.name) return false;
-    _prepare();
-    if (payload == '1') {
-      _publishMeta(_devMeta!);
-      return true;
-    } else if (payload == '0') {
-      _publishMeta(_meta!);
-      return true;
-    }
-
     return false;
   }
 

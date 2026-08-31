@@ -23,6 +23,14 @@ enum WbControlType {
   /// Сериализует meta контрола в JSON-строку для MQTT.
   static String meta(Map<String, dynamic> fields) => jsonEncode(fields);
 
+  static WbControlType fromString(String str) {
+    for (final t in values) {
+      if (t.mqttValue == str) return t;
+    }
+
+    throw FormatException('Unknown control type: $str');
+  }
+
   /// Все допустимые значения `type` из conventions.
   static const mqttValues = [
     'switch',

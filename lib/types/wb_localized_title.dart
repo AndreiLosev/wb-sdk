@@ -9,4 +9,18 @@ class WbLocalizedTitle {
 
   /// Русский заголовок.
   final String? ru;
+
+  Map<String, String> toMap() {
+    final result = <String, String>{};
+    final enVal = en;
+    final ruVal = ru;
+    if (enVal != null) result['en'] = enVal;
+    if (ruVal != null) result['ru'] = ruVal;
+    return result;
+  }
+
+  static WbLocalizedTitle? fromMap(dynamic map) {
+    if (map == null) return null;
+    return WbLocalizedTitle(en: map['en'] as String?, ru: map['ru'] as String?);
+  }
 }
