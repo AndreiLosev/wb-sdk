@@ -51,7 +51,7 @@ abstract class IDevice {
 
     final oreder = meta().length;
     for (final (i, meta) in part.addMeta().entries.indexed) {
-      meta.value.order = (meta.value.order ?? i) + oreder;
+      meta.value.order = (meta.value.order ?? (i + 1)) + oreder;
       _meta[meta.key] = meta.value;
     }
 
