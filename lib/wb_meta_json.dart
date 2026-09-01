@@ -61,7 +61,7 @@ class ControlMeta {
       precision = map['precision'] as double?,
       readonly = map['readonly'] as bool? ?? false,
       hidden = map['hidden'] as bool? ?? false,
-      enumTitles = _parseEnumTitles(map['enumTitles'] as Map<String, dynamic>?),
+      enumTitles = _parseEnumTitles(map['enum'] as Map<String, dynamic>?),
       order = map['order'] as int?,
       sender = map['sender'] as String?;
 

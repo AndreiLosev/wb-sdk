@@ -1,11 +1,4 @@
-import 'package:wb_sdk/addtionpal_controls/meta_ressiver.dart';
-import 'package:wb_sdk/contracts/idevice.dart';
-import 'package:wb_sdk/contracts/wb_storage.dart';
-import 'package:wb_sdk/orchestrator/wb_orchestrator.dart';
-import 'package:wb_sdk/storage/wb_hive_storage.dart';
-import 'package:wb_sdk/types/wb_control_type.dart';
-import 'package:wb_sdk/types/wb_localized_title.dart';
-import 'package:wb_sdk/wb_meta_json.dart';
+import 'package:wb_sdk/wb_sdk.dart';
 
 enum Mode {
   auto,
@@ -22,7 +15,7 @@ enum Mode {
   }
 }
 
-class ControlModeControl extends PartOfIDevice with MetaRessiver {
+class ControlMode extends PartOfIDevice with MetaRessiver {
   static String name = 'control_mode';
 
   final List<String> controls;

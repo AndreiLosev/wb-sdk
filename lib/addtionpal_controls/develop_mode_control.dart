@@ -1,7 +1,6 @@
-import 'package:wb_sdk/addtionpal_controls/meta_ressiver.dart';
 import 'package:wb_sdk/wb_sdk.dart';
 
-class DevelopModeControl extends PartOfIDevice with MetaRessiver {
+class DevelopMode extends PartOfIDevice with MetaRessiver {
   static String name = 'dev_mode';
   static String postfix = 'meta';
 
