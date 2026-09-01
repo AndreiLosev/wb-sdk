@@ -76,14 +76,13 @@ class OrchestratorBootstrap {
         final type = controlMeta.type;
         final value = storage.get('${device.name}.${entry.key}', entry.value);
         final payload = WbValueCodec.encode(value, type);
-
+        print({entry.key, entry.value});
         device.updateField(
           WbMqttMessage(
             topic: '${device.name}/${entry.key}/on',
             payload: payload,
           ),
         );
-        wbPublish('${device.name}/${entry.key}/on', payload);
       }
     }
   }

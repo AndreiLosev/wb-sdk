@@ -74,7 +74,7 @@ class ControlMeta {
     'precision': ?precision,
     'readonly': readonly,
     'hidden': hidden,
-    'enumTitles': ?_serializeEnumTitles(enumTitles),
+    'enum': ?_serializeEnumTitles(enumTitles),
     'order': ?order,
     'sender': ?sender,
   });
@@ -82,6 +82,34 @@ class ControlMeta {
   factory ControlMeta.fromJson(String json) {
     final map = jsonDecode(json) as Map<String, dynamic>;
     return ControlMeta._fromMap(map);
+  }
+
+  ControlMeta copyWith({
+    WbControlType? type,
+    WbLocalizedTitle? title,
+    String? units,
+    int? min,
+    int? max,
+    double? precision,
+    bool? readonly,
+    bool? hidden,
+    Map<String, WbLocalizedTitle>? enumTitles,
+    int? order,
+    String? sender,
+  }) {
+    return ControlMeta(
+      type: type ?? this.type,
+      title: title ?? this.title,
+      units: units ?? this.units,
+      min: min ?? this.min,
+      max: max ?? this.max,
+      precision: precision ?? this.precision,
+      readonly: readonly ?? this.readonly,
+      hidden: hidden ?? this.hidden,
+      enumTitles: enumTitles ?? this.enumTitles,
+      order: order ?? this.order,
+      sender: sender ?? this.sender,
+    );
   }
 
   static Map<String, WbLocalizedTitle>? _parseEnumTitles(

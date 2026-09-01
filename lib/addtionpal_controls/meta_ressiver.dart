@@ -18,7 +18,7 @@ mixin MetaRessiver on PartOfIDevice {
     }
   }
 
-  void rxMeta(String topic, String payload) {
+  void rxMeta(String topic, String payload, [String? skipSender]) {
     if (!topic.endsWith(postfix)) {
       return;
     }
@@ -26,10 +26,10 @@ mixin MetaRessiver on PartOfIDevice {
     final controlName = topic.replaceFirst('/$postfix', '');
 
     final meta = ControlMeta.fromJson(payload);
-    if (meta.sender == runtimeType.toString()) {
+
+    if (skipSender != null && meta.sender == skipSender) {
       return;
     }
-
     _defaultMeta[controlName] = meta;
   }
 }

@@ -7,12 +7,10 @@ class DevelopModeControl extends PartOfIDevice with MetaRessiver {
 
   final bool hidden;
 
-  final Map<String, ControlMeta> _defaultMeta = {};
-
   new({this.hidden = false});
 
   @override
-  Set<String> addInputs() {
+  Set<String> addOutputs() {
     return {'$name/on', MetaRessiver.topic};
   }
 
@@ -29,30 +27,27 @@ class DevelopModeControl extends PartOfIDevice with MetaRessiver {
 
   @override
   bool updateFields(String control, String payload) {
-    rxMeta(control, payload);
-
+    rxMeta(control, payload, runtimeType.toString());
     if (control != name) {
       return false;
     }
-
     if (WbValueCodec.decodeBool(payload)) {
       updateMeta(_metaToDev());
       return true;
     }
-
-    updateMeta(_defaultMeta);
+    updateMeta(defaultMeta);
     return true;
   }
 
   Map<String, ControlMeta> _metaToDev() {
     final result = <String, ControlMeta>{};
 
-    for (final m in _defaultMeta.entries) {
-      m.value.hidden = false;
-      m.value.readonly = false;
-      m.value.sender = runtimeType.toString();
-
-      result[m.key] = m.value;
+    for (final m in defaultMeta.entries) {
+      result[m.key] = m.value.copyWith(
+        hidden: false,
+        readonly: false,
+        sender: runtimeType.toString(),
+      );
     }
 
     return result;
