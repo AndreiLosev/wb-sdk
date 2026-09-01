@@ -11,7 +11,7 @@ abstract final class WbValueCodec {
 
   static String encodeDouble(double value) => value.toString();
 
-  static double decodeDouble(String payload) => double.parse(payload);
+  static num decodeNum(String payload) => num.parse(payload);
 
   static String encodeString(String value) => value;
 
@@ -41,7 +41,7 @@ abstract final class WbValueCodec {
       WbControlType.range ||
       WbControlType.unixtime ||
       WbControlType.w1Id => decodeInt(payload),
-      WbControlType.value => decodeDouble(payload),
+      WbControlType.value => decodeNum(payload),
       WbControlType.rgb || WbControlType.text => decodeString(payload),
     };
   }
