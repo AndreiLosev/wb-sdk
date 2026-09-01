@@ -11,7 +11,21 @@ abstract final class WbValueCodec {
 
   static String encodeDouble(double value) => value.toString();
 
+  static String encodeNum(num value) => switch (value) {
+    int v => encodeInt(v),
+    double v => encodeDouble(v),
+    _ => throw ArgumentError('Invalid num type: ${value.runtimeType}'),
+  };
+
   static num decodeNum(String payload) => num.parse(payload);
+
+  static int decodeIntValue(String payload) {
+    final value = num.parse(payload);
+    return value is int ? value : value.round();
+  }
+
+  static double decodeDoubleValue(String payload) =>
+      num.parse(payload).toDouble();
 
   static String encodeString(String value) => value;
 
@@ -22,7 +36,7 @@ abstract final class WbValueCodec {
     return switch (value) {
       final bool v when _isBoolType(type) => encodeBool(v),
       final int v when _isIntType(type) => encodeInt(v),
-      final double v when type == WbControlType.value => encodeDouble(v),
+      final num v when type == WbControlType.value => encodeNum(v),
       final String v when _isStringType(type) => encodeString(v),
       null => '',
       _ => throw ArgumentError(

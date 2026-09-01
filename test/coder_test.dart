@@ -30,5 +30,27 @@ void main() {
         'auto',
       );
     });
+
+    test('encode/decode для WbControlType.value с int и double', () {
+      expect(
+        WbValueCodec.encode(42, WbControlType.value),
+        '42',
+      );
+      expect(
+        WbValueCodec.encode(3.14, WbControlType.value),
+        '3.14',
+      );
+      expect(WbValueCodec.decodeIntValue('42'), 42);
+      expect(WbValueCodec.decodeDoubleValue('42'), 42.0);
+      expect(WbValueCodec.decodeDoubleValue('3.14'), 3.14);
+      expect(
+        WbValueCodec.decode('42', WbControlType.value),
+        42,
+      );
+      expect(
+        WbValueCodec.decode('3.14', WbControlType.value),
+        3.14,
+      );
+    });
   });
 }
