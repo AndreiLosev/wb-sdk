@@ -53,13 +53,6 @@ class ControlModeControl extends PartOfIDevice with MetaRessiver {
 
     if (resolve == null) return false;
 
-    print({
-      'mode': mode,
-      'resolve': resolve,
-      'control': control,
-      'payload': payload,
-    });
-
     if (resolve != mode) {
       WbHiveStorage.getInstanse().put('${device.name}.$name', mode.name);
     }
