@@ -65,7 +65,7 @@ class DeviceTopicRouter {
   final Map<String, Set<IDevice>> _dependencies;
   final Map<String, RegExp> _genericTopicsForDependencies;
 
-  Iterable<String> get topics => _routes.keys;
+  Iterable<String> get topics => _routes.keys.followedBy(_dependencies.keys);
 
   void route(WbMqttMessage message, WbTopicMapping topicMapping) {
     final topic = topicMapping.resolveInputTopic(message.topic);

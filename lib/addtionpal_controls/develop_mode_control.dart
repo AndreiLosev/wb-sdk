@@ -2,16 +2,13 @@ import 'package:wb_sdk/wb_sdk.dart';
 
 class DevelopMode extends PartOfIDevice with MetaRessiver {
   static String name = 'dev_mode';
-  static String postfix = 'meta';
 
   final bool hidden;
 
   new({this.hidden = false});
 
   @override
-  Set<String> addOutputs() {
-    return {'$name/on', MetaRessiver.topic};
-  }
+  Set<String> addOutputs() => {'$name/on', MetaRessiver.topic};
 
   @override
   Map<String, ControlMeta> addMeta() {
