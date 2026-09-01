@@ -16,7 +16,12 @@ enum Mode {
 }
 
 class ControlMode extends PartOfIDevice with MetaRessiver {
-  static String name = 'control_mode';
+  static const String name = 'control_mode';
+
+  static final _skipSenders = [
+    ControlMode(controls: []).runtimeType.toString(),
+    DevelopMode().runtimeType.toString(),
+  ];
 
   final List<String> controls;
 
@@ -39,7 +44,7 @@ class ControlMode extends PartOfIDevice with MetaRessiver {
 
   @override
   bool updateFields(String control, String payload) {
-    rxMeta(control, payload, runtimeType.toString());
+    rxMeta(control, payload, _skipSenders);
 
     if (control != name) return false;
     final resolve = Mode.fromString(payload);

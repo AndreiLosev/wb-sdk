@@ -18,7 +18,11 @@ mixin MetaRessiver on PartOfIDevice {
     }
   }
 
-  void rxMeta(String topic, String payload, [String? skipSender]) {
+  void rxMeta(
+    String topic,
+    String payload, [
+    List<String> skipSenders = const [],
+  ]) {
     if (!topic.endsWith(postfix)) {
       return;
     }
@@ -27,7 +31,7 @@ mixin MetaRessiver on PartOfIDevice {
 
     final meta = ControlMeta.fromJson(payload);
 
-    if (skipSender != null && meta.sender == skipSender) {
+    if (skipSenders.contains(meta.sender)) {
       return;
     }
     _defaultMeta[controlName] = meta;

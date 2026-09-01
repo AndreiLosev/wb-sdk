@@ -26,7 +26,7 @@ class DevelopMode extends PartOfIDevice with MetaRessiver {
 
   @override
   bool updateFields(String control, String payload) {
-    rxMeta(control, payload, runtimeType.toString());
+    rxMeta(control, payload, [runtimeType.toString()]);
     if (control != name) {
       return false;
     }
