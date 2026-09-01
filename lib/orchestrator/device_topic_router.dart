@@ -10,9 +10,12 @@ class TopicRoute {
 }
 
 class DeviceTopicRouter {
-  DeviceTopicRouter._(this._routes) {
-    _genericTopics = _makeGenericTopick();
-  }
+  DeviceTopicRouter._(
+    this._routes,
+    this._genericTopics,
+    this._dependencies,
+    this._genericTopicsForDependencies,
+  );
 
   factory DeviceTopicRouter.fromDevices(List<IDevice> devices) {
     final routes = <String, TopicRoute>{};
@@ -32,11 +35,35 @@ class DeviceTopicRouter {
       }
     }
 
-    return DeviceTopicRouter._(routes);
+    final genericTopics = _makeGenericTopick(routes.keys);
+
+    final dependencies = <String, Set<IDevice>>{};
+
+    for (final dev in devices) {
+      for (final topic in dev.dependencies()) {
+        if (dependencies[topic] == null) {
+          dependencies[topic] = {dev};
+          continue;
+        }
+
+        dependencies[topic]!.add(dev);
+      }
+    }
+
+    final genericTopicsForDependencies = _makeGenericTopick(dependencies.keys);
+
+    return DeviceTopicRouter._(
+      routes,
+      genericTopics,
+      dependencies,
+      genericTopicsForDependencies,
+    );
   }
 
   final Map<String, TopicRoute> _routes;
-  late final Map<String, RegExp> _genericTopics;
+  final Map<String, RegExp> _genericTopics;
+  final Map<String, Set<IDevice>> _dependencies;
+  final Map<String, RegExp> _genericTopicsForDependencies;
 
   Iterable<String> get topics => _routes.keys;
 
@@ -53,6 +80,16 @@ class DeviceTopicRouter {
     if (route.isInput) {
       route.device.execute();
     }
+
+    final devices = _dependencies[topic] ?? _resolveGenericTopicForDep(topic);
+
+    if (devices == null) {
+      return;
+    }
+
+    for (final dev in devices) {
+      dev.execute();
+    }
   }
 
   TopicRoute? _resolveGenericTopic(String topic) {
@@ -64,7 +101,16 @@ class DeviceTopicRouter {
     return null;
   }
 
-  Map<String, RegExp> _makeGenericTopick() {
+  Set<IDevice>? _resolveGenericTopicForDep(String topic) {
+    for (final entry in _genericTopicsForDependencies.entries) {
+      if (entry.value.hasMatch(topic)) {
+        return _dependencies[entry.key];
+      }
+    }
+    return null;
+  }
+
+  static Map<String, RegExp> _makeGenericTopick(Iterable<String> topics) {
     return Map.fromEntries(
       topics
           .where((e) => e.contains('+') || e.endsWith('#'))

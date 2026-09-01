@@ -9,6 +9,7 @@ abstract class IDevice {
   final _updateFields = <UpdateFieldFn>[];
   final _parts = <Type, PartOfIDevice>{};
   final _retains = <String, Object?>{};
+  final _dependencies = <String>{};
 
   String get name;
 
@@ -23,6 +24,8 @@ abstract class IDevice {
   Set<String> outputs() => _outputs;
 
   Map<String, Object?> retains() => _retains;
+
+  Set<String> dependencies() => _dependencies;
 
   void updateField(WbMqttMessage mess) {
     final prefix = '$name/';
@@ -48,6 +51,7 @@ abstract class IDevice {
     part.setDevice(this);
     _inputs.addAll(part.addInputs());
     _outputs.addAll(part.addOutputs());
+    _dependencies.addAll(part.addDependencies());
 
     final oreder = meta().length;
     for (final (i, meta) in part.addMeta().entries.indexed) {
@@ -68,6 +72,7 @@ abstract class PartOfIDevice {
   Set<String> addInputs() => {};
   Set<String> addOutputs() => {};
   Map<String, ControlMeta> addMeta() => {};
+  Set<String> addDependencies() => {};
   bool updateFields(String control, String payload) => false;
   Map<String, Object?> addRetains() => {};
   void setDevice(IDevice device) {
