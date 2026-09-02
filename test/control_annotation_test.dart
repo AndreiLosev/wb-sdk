@@ -159,6 +159,10 @@ void main() {
       );
 
       expect(device, isA<VirtualDevice>());
+      expect(device.dependencies, isEmpty);
+
+      const deviceWithDeps = VirtualDevice(dependencies: ['sensor/temp/on']);
+      expect(deviceWithDeps.dependencies, ['sensor/temp/on']);
 
       expect(inputControl, isA<ControlAnnotation>());
       expect(inputControl.type, WbControlType.switch_);

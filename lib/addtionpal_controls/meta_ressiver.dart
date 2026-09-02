@@ -7,14 +7,24 @@ mixin MetaRessiver on PartOfIDevice {
 
   static String topic = '+/meta';
 
+  final _allowControls = <String>{};
+
   final Map<String, ControlMeta> _defaultMeta = {};
 
   Map<String, ControlMeta> get defaultMeta => _defaultMeta;
 
+  void addAllowControl(String controlName) {
+    _allowControls.add(controlName);
+  }
+
   void updateMeta(Map<String, ControlMeta> meta) {
     for (final m in meta.entries) {
       m.value.sender = runtimeType.toString();
-      wbPublish('${device.name}/${m.key}/$postfix', m.value.toJson());
+      wbPublish(
+        '${device.name}/${m.key}/$postfix',
+        m.value.toJson(),
+        retained: true,
+      );
     }
   }
 
@@ -28,6 +38,10 @@ mixin MetaRessiver on PartOfIDevice {
     }
 
     final controlName = topic.replaceFirst('/$postfix', '');
+
+    if (_allowControls.isNotEmpty && !_allowControls.contains(controlName)) {
+      return;
+    }
 
     final meta = ControlMeta.fromJson(payload);
 

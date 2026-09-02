@@ -19,8 +19,8 @@ class Ftrig {
 
   /// Возвращает `true` ровно на один вызов при заднем фронте [clk].
   bool update(bool clk) {
-    final q = !clk && !_m;
-    _m = !clk;
+    final q = !clk && _m;
+    _m = clk;
     return q;
   }
 
