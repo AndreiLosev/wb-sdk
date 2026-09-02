@@ -84,7 +84,7 @@ void main() {
       expect(meta.toJson(), json);
     });
 
-    test('toJson сериализует units, min, max, precision и enumTitles', () {
+    test('toJson сериализует units, min, max, precision и enum', () {
       final meta = ControlMeta(
         type: WbControlType.value,
         title: WbLocalizedTitle(en: 'Power', ru: 'Мощность'),
@@ -100,7 +100,7 @@ void main() {
 
       expect(
         meta.toJson(),
-        '{"type":"value","title":{"en":"Power","ru":"Мощность"},"units":"W","min":0,"max":5000,"precision":0.1,"readonly":false,"hidden":false,"enumTitles":{"0":{"en":"Off","ru":"Выкл"},"1":{"en":"On","ru":"Вкл"}}}',
+        '{"type":"value","title":{"en":"Power","ru":"Мощность"},"units":"W","min":0,"max":5000,"precision":0.1,"readonly":false,"hidden":false,"enum":{"0":{"en":"Off","ru":"Выкл"},"1":{"en":"On","ru":"Вкл"}}}',
       );
     });
   });

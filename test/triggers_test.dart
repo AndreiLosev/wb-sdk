@@ -63,16 +63,16 @@ void main() {
       expect(trig.update(true), isFalse);
     });
 
-    test('первый вызов с false даёт импульс (холодный старт)', () {
+    test('первый вызов с false не даёт импульс (холодный старт)', () {
       final trig = Ftrig();
 
-      expect(trig.update(false), isTrue);
+      expect(trig.update(false), isFalse);
     });
 
-    test('стабильный false даёт импульс только на первом вызове', () {
+    test('стабильный false не даёт импульса', () {
       final trig = Ftrig();
 
-      expect(trig.update(false), isTrue);
+      expect(trig.update(false), isFalse);
       expect(trig.update(false), isFalse);
       expect(trig.update(false), isFalse);
     });
@@ -96,13 +96,14 @@ void main() {
       expect(pulses, [false, true, false, false, false, true, false, false]);
     });
 
-    test('reset сбрасывает состояние', () {
+    test('reset сбрасывает состояние и снова даёт импульс на true → false', () {
       final trig = Ftrig();
 
       trig.update(true);
       trig.update(false);
       trig.reset();
 
+      trig.update(true);
       expect(trig.update(false), isTrue);
     });
   });
