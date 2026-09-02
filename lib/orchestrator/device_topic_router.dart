@@ -68,14 +68,19 @@ class DeviceTopicRouter {
   Iterable<String> get topics => _routes.keys.followedBy(_dependencies.keys);
 
   void route(WbMqttMessage message, WbTopicMapping topicMapping) {
-    final topic = topicMapping.resolveInputTopic(message.topic);
+    for (final topic in topicMapping.resolveInputTopics(message.topic)) {
+      _routeResolved(topic, message.payload);
+    }
+  }
+
+  void _routeResolved(String topic, String payload) {
     final route = _routes[topic] ?? _resolveGenericTopic(topic);
 
     if (route == null) {
       return;
     }
     route.device.updateField(
-      WbMqttMessage(topic: topic, payload: message.payload),
+      WbMqttMessage(topic: topic, payload: payload),
     );
     if (route.isInput) {
       route.device.execute();

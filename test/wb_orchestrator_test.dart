@@ -155,8 +155,8 @@ void main() {
     late _TestDevice deviceA;
 
     final topicMapping = WbTopicMapping(
-      inputs: {'alias/temp/on': 'dev_a/temp/on'},
-      outputs: {'dev_a/lamp/on': 'alias/lamp/on'},
+      inputs: {'alias/temp/on': {'dev_a/temp/on'}},
+      outputs: {'dev_a/lamp/on': {'alias/lamp/on'}},
     );
 
     setUp(() {
@@ -198,6 +198,34 @@ void main() {
       );
       expect(mqtt.publishedPayloads, ['1', '1']);
     });
+
+    test('алиас с несколькими каноническими топиками обновляет все устройства', () {
+      final deviceB = _TestDevice(
+        name: 'dev_b',
+        inputs: {'temp/on'},
+      );
+      final multiMapping = WbTopicMapping(
+        inputs: {
+          'alias/temp/on': {'dev_a/temp/on', 'dev_b/temp/on'},
+        },
+      );
+      final multiOrchestrator = WbOrchestrator.assemble(
+        mqtt: mqtt,
+        defaults: multiMapping,
+        devices: [deviceA, deviceB],
+      );
+
+      multiOrchestrator.handleMessage(
+        const WbMqttMessage(topic: 'alias/temp/on', payload: '21.5'),
+      );
+
+      expect(deviceA.updateFieldCalls, 1);
+      expect(deviceA.executeCalls, 1);
+      expect(deviceA.lastMessage?.topic, 'dev_a/temp/on');
+      expect(deviceB.updateFieldCalls, 1);
+      expect(deviceB.executeCalls, 1);
+      expect(deviceB.lastMessage?.topic, 'dev_b/temp/on');
+    });
   });
 
   group('WbTopicMapping io_mapping sync', () {
@@ -218,7 +246,7 @@ void main() {
         mqtt: mqtt,
         storage: storage,
         defaults: WbTopicMapping(
-          inputs: {'alias/temp/on': 'dev_a/temp/on'},
+          inputs: {'alias/temp/on': {'dev_a/temp/on'}},
         ),
         devices: [deviceA],
       );
@@ -235,7 +263,7 @@ void main() {
         mqtt.publishedTopics,
         contains('io_mapping/inputs/alias/temp/on'),
       );
-      expect(mqtt.publishedPayloads, contains('dev_a/temp/on'));
+      expect(mqtt.publishedPayloads, contains('["dev_a/temp/on"]'));
     });
 
     test('io_mapping input обновляет маппинг, сохраняет и подписывается', () {
@@ -249,8 +277,8 @@ void main() {
       );
 
       expect(storage.get(WbTopicMapping.inputsStorageKey, null), {
-        'alias/temp/on': 'dev_a/temp/on',
-        'new_alias/temp/on': 'dev_a/temp/on',
+        'alias/temp/on': ['dev_a/temp/on'],
+        'new_alias/temp/on': ['dev_a/temp/on'],
       });
       expect(mqtt.subscribedTopics, contains('new_alias/temp/on'));
     });
@@ -287,7 +315,7 @@ void main() {
 
       expect(
         storage.get(WbTopicMapping.inputsStorageKey, null),
-        <String, String>{},
+        <String, List<String>>{},
       );
       expect(mqtt.unsubscribedTopics, contains('alias/temp/on'));
     });

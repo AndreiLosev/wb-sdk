@@ -39,8 +39,8 @@ void main() {
     await storage.open();
 
     final mapping = WbTopicMapping(
-      inputs: {'alias/temp/on': 'dev_a/temp/on'},
-      outputs: {'dev_a/lamp/on': 'alias/lamp/on'},
+      inputs: {'alias/temp/on': {'dev_a/temp/on'}},
+      outputs: {'dev_a/lamp/on': {'alias/lamp/on'}},
     );
     mapping.save(storage);
 
