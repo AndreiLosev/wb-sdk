@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
 import 'package:wb_sdk/control/pid_controller_base.dart';
-import 'package:wb_sdk/orchestrator/wb_orchestrator.dart';
 
 /// PID-регулятор с автоматическим расчётом [_lastCallTime] между вызовами
 /// и публикацией выхода в MQTT при длительном интервале.
@@ -11,6 +9,7 @@ class PidController extends PidControllerBase {
     required super.kp,
     required super.ki,
     required super.kd,
+    required super.mode,
     super.outputMin,
     super.outputMax,
     super.setpoint = 0,
@@ -24,7 +23,7 @@ class PidController extends PidControllerBase {
 
   final Duration autoUpdateDelay;
 
-  final WbMqttMessage Function()? runUpdate;
+  final void Function()? runUpdate;
 
   Timer? _timer;
 
@@ -32,7 +31,6 @@ class PidController extends PidControllerBase {
 
   double calculate({required double processVariable}) {
     final result = update(processVariable: processVariable, dt: _getTimeDiff());
-
     _resetTimer();
 
     return result;
@@ -44,12 +42,6 @@ class PidController extends PidControllerBase {
     _lastCallTime = 0;
     _timer?.cancel();
     _timer = null;
-  }
-
-  void dispose() {
-    _timer?.cancel();
-    _timer = null;
-    _lastCallTime = 0;
   }
 
   double _getTimeDiff() {
@@ -67,12 +59,6 @@ class PidController extends PidControllerBase {
 
   void _resetTimer() {
     _timer?.cancel();
-    _timer = Timer(autoUpdateDelay, () {
-      if (runUpdate == null) {
-        return;
-      }
-      final WbMqttMessage(:topic, :payload) = runUpdate!();
-      wbPublish(topic, payload, retained: true);
-    });
+    _timer = Timer(autoUpdateDelay, () => runUpdate?.call());
   }
 }

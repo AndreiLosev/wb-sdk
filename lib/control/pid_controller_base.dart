@@ -1,5 +1,7 @@
 import 'package:wb_sdk/wb_numeric_bounds.dart';
 
+enum PidMode { cooler, heater }
+
 /// Дискретный PID-регулятор с ограничением выхода, anti-windup
 /// и производной по измерению (derivative on measurement).
 class PidControllerBase {
@@ -7,6 +9,7 @@ class PidControllerBase {
     required this.kp,
     required this.ki,
     required this.kd,
+    required this.mode,
     this.outputMin,
     this.outputMax,
     this.setpoint = 0,
@@ -34,6 +37,8 @@ class PidControllerBase {
   double _pTerm = 0;
   double _iTerm = 0;
   double _dTerm = 0;
+
+  PidMode mode;
 
   /// Накопленный интеграл ошибки.
   double get integral => _integral;
@@ -65,7 +70,10 @@ class PidControllerBase {
       this.setpoint = setpoint;
     }
 
-    final error = this.setpoint - processVariable;
+    final error = switch (mode) {
+      PidMode.heater => this.setpoint - processVariable,
+      PidMode.cooler => processVariable - this.setpoint,
+    };
 
     _pTerm = kp * error;
 
