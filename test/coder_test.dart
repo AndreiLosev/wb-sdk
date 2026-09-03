@@ -52,5 +52,24 @@ void main() {
         3.14,
       );
     });
+
+    test('encode/decode для WbControlType.range с int и double', () {
+      expect(
+        WbValueCodec.encode(42, WbControlType.range),
+        '42',
+      );
+      expect(
+        WbValueCodec.encode(3.14, WbControlType.range),
+        '3.14',
+      );
+      expect(
+        WbValueCodec.decode('42', WbControlType.range),
+        42,
+      );
+      expect(
+        WbValueCodec.decode('3.14', WbControlType.range),
+        3.14,
+      );
+    });
   });
 }

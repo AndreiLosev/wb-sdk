@@ -11,9 +11,7 @@ class PidControllerBase {
     this.outputMax,
     this.setpoint = 0,
   }) {
-    if (outputMin != null &&
-        outputMax != null &&
-        outputMin! > outputMax!) {
+    if (outputMin != null && outputMax != null && outputMin! > outputMax!) {
       throw ArgumentError.value(
         outputMin,
         'outputMin',
@@ -22,11 +20,11 @@ class PidControllerBase {
     }
   }
 
-  final double kp;
-  final double ki;
-  final double kd;
-  final double? outputMin;
-  final double? outputMax;
+  double kp;
+  double ki;
+  double kd;
+  double? outputMin;
+  double? outputMax;
 
   double setpoint;
 

@@ -36,7 +36,7 @@ abstract final class WbValueCodec {
     return switch (value) {
       final bool v when _isBoolType(type) => encodeBool(v),
       final int v when _isIntType(type) => encodeInt(v),
-      final num v when type == WbControlType.value => encodeNum(v),
+      final num v when _isNumType(type) => encodeNum(v),
       final String v when _isStringType(type) => encodeString(v),
       null => '',
       _ => throw ArgumentError(
@@ -52,10 +52,8 @@ abstract final class WbValueCodec {
       WbControlType.woSwitch ||
       WbControlType.alarm ||
       WbControlType.pushbutton => decodeBool(payload),
-      WbControlType.range ||
-      WbControlType.unixtime ||
-      WbControlType.w1Id => decodeInt(payload),
-      WbControlType.value => decodeNum(payload),
+      WbControlType.unixtime || WbControlType.w1Id => decodeInt(payload),
+      WbControlType.range || WbControlType.value => decodeNum(payload),
       WbControlType.rgb || WbControlType.text => decodeString(payload),
     };
   }
@@ -72,9 +70,14 @@ abstract final class WbValueCodec {
 
   static bool _isIntType(WbControlType type) {
     return switch (type) {
-      WbControlType.range ||
-      WbControlType.unixtime ||
-      WbControlType.w1Id => true,
+      WbControlType.unixtime || WbControlType.w1Id => true,
+      _ => false,
+    };
+  }
+
+  static bool _isNumType(WbControlType type) {
+    return switch (type) {
+      WbControlType.range || WbControlType.value => true,
       _ => false,
     };
   }
