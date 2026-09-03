@@ -15,7 +15,7 @@ class PidController extends PidControllerBase {
     super.outputMax,
     super.setpoint = 0,
     this.runUpdate,
-    this.autoUpdateDelay = const Duration(seconds: 10),
+    this.autoUpdateDelay = const Duration(seconds: 5),
   }) {
     _resetTimer();
   }
