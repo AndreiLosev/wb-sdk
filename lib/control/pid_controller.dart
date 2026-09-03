@@ -30,12 +30,8 @@ class PidController extends PidControllerBase {
 
   int _lastCallTime = 0;
 
-  double calculate({required double processVariable, double? setpoint}) {
-    final result = update(
-      processVariable: processVariable,
-      dt: _getTimeDiff(),
-      setpoint: setpoint,
-    );
+  double calculate({required double processVariable}) {
+    final result = update(processVariable: processVariable, dt: _getTimeDiff());
 
     _resetTimer();
 
