@@ -38,12 +38,14 @@ class OrchestratorBootstrap {
       mqtt.subscribe(topic);
     }
 
-    _restoreRetains(devices, storage);
-    runSystem();
-    Future.microtask(() {
-      for (final device in devices.values) {
-        device.execute();
-      }
+    Timer(const Duration(seconds: 1), () {
+      _restoreRetains(devices, storage);
+      runSystem();
+      Future.microtask(() {
+        for (final device in devices.values) {
+          device.execute();
+        }
+      });
     });
   }
 
