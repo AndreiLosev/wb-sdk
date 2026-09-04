@@ -10,7 +10,7 @@ import 'device_topic_router.dart';
 import 'io_mapping_sync.dart';
 import 'orchestrator_bootstrap.dart';
 
-late void Function(String topic, String payload, {bool retained}) wbPublish;
+late void Function(String topic, String payload) wbPublish;
 
 late T Function<T extends IDevice?>(String devName) getDevice;
 
@@ -152,9 +152,9 @@ class WbOrchestrator {
   }
 
   void _makeWpPublish() {
-    wbPublish = (String topic, String payload, {bool retained = true}) {
+    wbPublish = (String topic, String payload) {
       for (final mappedTopic in _topicMapping.expandOutputTopics(topic)) {
-        _mqtt.publish(mappedTopic, payload, retained: retained);
+        _mqtt.publish(mappedTopic, payload, retained: true);
       }
     };
   }

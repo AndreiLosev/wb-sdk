@@ -43,18 +43,10 @@ class OrchestratorBootstrap {
 
   void _publishDeviceMeta(Map<String, IDevice> devices) {
     for (final device in devices.values) {
-      wbPublish(
-        '${device.name}/meta',
-        WbMetaJson.device(device.title),
-        retained: true,
-      );
+      wbPublish('${device.name}/meta', WbMetaJson.device(device.title));
       for (final entry in device.meta().entries) {
         entry.value.sender = runtimeType.toString();
-        wbPublish(
-          '${device.name}/${entry.key}/meta',
-          entry.value.toJson(),
-          retained: true,
-        );
+        wbPublish('${device.name}/${entry.key}/meta', entry.value.toJson());
       }
     }
   }
