@@ -23,7 +23,6 @@ mixin MetaRessiver on PartOfIDevice {
       wbPublish(
         '${device.name}/${m.key}/$postfix',
         m.value.toJson(),
-        retained: true,
       );
     }
   }
