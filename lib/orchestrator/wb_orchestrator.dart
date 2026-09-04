@@ -1,5 +1,6 @@
 import 'package:meta/meta.dart';
 import 'package:wb_sdk/contracts/idevice.dart';
+import 'package:wb_sdk/contracts/iexternal_service.dart';
 import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
 import 'package:wb_sdk/contracts/wb_storage.dart';
 import 'package:wb_sdk/debug/wb_debug_log.dart';
@@ -7,6 +8,8 @@ import 'package:wb_sdk/mqtt/wb_client.dart';
 import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
 
 import 'device_topic_router.dart';
+import 'external_service_registry.dart';
+import 'external_service_router.dart';
 import 'io_mapping_sync.dart';
 import 'orchestrator_bootstrap.dart';
 
@@ -22,6 +25,7 @@ class WbOrchestrator {
     required WbMqttClient mqtt,
     required List<IDevice> devices,
     required WbTopicMapping topicMapping,
+    required this._externalRouter,
     WbStorage? storage,
   }) : _mqtt = mqtt,
        _topicMapping = topicMapping,
@@ -46,7 +50,10 @@ class WbOrchestrator {
     required List<IDevice> devices,
     WbTopicMapping? defaults,
     WbStorage? storage,
+    List<IExternalService> services = const [],
   }) {
+    ExternalServiceRegistry.validate(services, devices);
+
     final mapping = WbTopicMapping(
       inputs: defaults?.inputs ?? {},
       outputs: defaults?.outputs ?? {},
@@ -58,12 +65,14 @@ class WbOrchestrator {
       mqtt: mqtt,
       devices: devices,
       topicMapping: mapping,
+      externalRouter: ExternalServiceRouter(services),
       storage: storage,
     );
   }
 
   final WbMqttClient _mqtt;
   final DeviceTopicRouter _router;
+  final ExternalServiceRouter _externalRouter;
   final Map<String, IDevice> _devices;
   final IoMappingSync _ioMappingSync;
   final OrchestratorBootstrap _bootstrap;
@@ -130,6 +139,7 @@ class WbOrchestrator {
       devices: _devices,
       topicMapping: _topicMapping,
       routeTopics: _router.topics,
+      externalSubscriptionTopics: _externalRouter.subscriptionTopics,
       storage: _storage,
       runSystem: () {
         _state = _OrchestratorState.running;
@@ -146,6 +156,10 @@ class WbOrchestrator {
 
     if (message.topic.startsWith('io_mapping/')) {
       _ioMappingSync.handle(message);
+      return;
+    }
+
+    if (_externalRouter.route(message)) {
       return;
     }
 

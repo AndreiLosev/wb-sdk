@@ -1,13 +1,29 @@
+import 'package:meta/meta.dart';
+
 /// Маппинг коротких топиков генератора на пути Wiren Board MQTT.
 abstract final class WbMqttTopics {
   static const _devicesPrefix = '/devices/';
   static const _ioMappingPrefix = 'io_mapping/';
   static const _debugPrefix = 'debug/';
 
+  static final _externalPrefixes = <String>{};
+
+  /// Регистрирует префиксы внешних сервисов для passthrough-маппинга.
+  static void registerExternalPrefixes(Iterable<String> prefixes) {
+    _externalPrefixes
+      ..clear()
+      ..addAll(prefixes);
+  }
+
+  /// Сбрасывает зарегистрированные префиксы внешних сервисов.
+  @visibleForTesting
+  static void clearExternalPrefixes() {
+    _externalPrefixes.clear();
+  }
+
   /// Короткий топик → broker (`/devices/...`, `/io_mapping/...` или `/debug/...`).
   static String toBrokerTopic(String shortTopic) {
-    if (shortTopic.startsWith(_ioMappingPrefix) ||
-        shortTopic.startsWith(_debugPrefix)) {
+    if (_isPassthroughTopic(shortTopic)) {
       return '/$shortTopic';
     }
 
@@ -41,9 +57,11 @@ abstract final class WbMqttTopics {
 
   /// Broker топик → короткий топик для `updateField`.
   static String? fromBrokerTopic(String brokerTopic) {
-    if (brokerTopic.startsWith('/$_ioMappingPrefix') ||
-        brokerTopic.startsWith('/$_debugPrefix')) {
-      return brokerTopic.substring(1);
+    if (brokerTopic.startsWith('/')) {
+      final short = brokerTopic.substring(1);
+      if (_isPassthroughTopic(short)) {
+        return short;
+      }
     }
 
     if (!brokerTopic.startsWith(_devicesPrefix)) {
@@ -72,5 +90,23 @@ abstract final class WbMqttTopics {
     }
 
     return null;
+  }
+
+  static bool _isPassthroughTopic(String shortTopic) {
+    if (shortTopic.startsWith(_ioMappingPrefix) ||
+        shortTopic.startsWith(_debugPrefix)) {
+      return true;
+    }
+
+    return _matchesExternalPrefix(shortTopic);
+  }
+
+  static bool _matchesExternalPrefix(String shortTopic) {
+    for (final prefix in _externalPrefixes) {
+      if (shortTopic.startsWith(prefix)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

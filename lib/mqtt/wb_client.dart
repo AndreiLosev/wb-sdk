@@ -94,6 +94,7 @@ class WbClient implements WbMqttClient {
   @override
   void subscribe(String topic) {
     _subscribedTopics.add(topic);
+    if (topic.contains('w1')) print(WbMqttTopics.toBrokerTopic(topic));
     _client.subscribe(WbMqttTopics.toBrokerTopic(topic), _qos);
   }
 

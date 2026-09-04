@@ -16,6 +16,7 @@ class OrchestratorBootstrap {
     required Map<String, IDevice> devices,
     required WbTopicMapping topicMapping,
     required Iterable<String> routeTopics,
+    required Iterable<String> externalSubscriptionTopics,
     WbStorage? storage,
     required void Function() runSystem,
   }) {
@@ -35,6 +36,9 @@ class OrchestratorBootstrap {
       mqtt.subscribe(topic);
     }
     for (final topic in WbDebugLog.subscriptionTopics(devices.keys)) {
+      mqtt.subscribe(topic);
+    }
+    for (final topic in externalSubscriptionTopics) {
       mqtt.subscribe(topic);
     }
 

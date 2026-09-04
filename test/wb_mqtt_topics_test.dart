@@ -2,6 +2,31 @@ import 'package:test/test.dart';
 import 'package:wb_sdk/wb_sdk.dart';
 
 void main() {
+  tearDown(WbMqttTopics.clearExternalPrefixes);
+
+  group('WbMqttTopics external prefixes', () {
+    setUp(() {
+      WbMqttTopics.registerExternalPrefixes(['weather/']);
+    });
+
+    test('toBrokerTopic passthrough для внешнего prefix', () {
+      expect(
+        WbMqttTopics.toBrokerTopic('weather/sensor/temp/on'),
+        '/weather/sensor/temp/on',
+      );
+      expect(
+        WbMqttTopics.toBrokerTopic('weather/#'),
+        '/weather/#',
+      );
+    });
+
+    test('fromBrokerTopic round-trip для внешнего prefix', () {
+      const short = 'weather/sensor/temp/on';
+      final broker = WbMqttTopics.toBrokerTopic(short);
+      expect(WbMqttTopics.fromBrokerTopic(broker), short);
+    });
+  });
+
   group('WbMqttTopics.toBrokerTopic', () {
     test('meta устройства', () {
       expect(
