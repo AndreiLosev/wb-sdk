@@ -83,13 +83,19 @@ class WbOrchestrator {
     }
 
     prepare();
-    _state = _OrchestratorState.running;
 
     try {
       await for (final message in _mqtt.messages) {
-        if (_state == _OrchestratorState.stopped) {
-          break;
+        switch (_state) {
+          case _OrchestratorState.stopped:
+            break;
+          case _OrchestratorState.prepared:
+            if (!message.topic.endsWith('meta')) {
+              continue;
+            }
+          default:
         }
+
         handleMessage(message);
       }
     } finally {
@@ -125,6 +131,9 @@ class WbOrchestrator {
       topicMapping: _topicMapping,
       routeTopics: _router.topics,
       storage: _storage,
+      runSystem: () {
+        _state = _OrchestratorState.running;
+      },
     );
   }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:wb_sdk/coder.dart';
 import 'package:wb_sdk/contracts/idevice.dart';
 import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
@@ -15,9 +17,9 @@ class OrchestratorBootstrap {
     required WbTopicMapping topicMapping,
     required Iterable<String> routeTopics,
     WbStorage? storage,
+    required void Function() runSystem,
   }) {
     _publishDeviceMeta(devices);
-    _restoreRetains(devices, storage);
 
     for (final topic in routeTopics) {
       mqtt.subscribe(topic);
@@ -36,9 +38,13 @@ class OrchestratorBootstrap {
       mqtt.subscribe(topic);
     }
 
-    for (final device in devices.values) {
-      device.execute();
-    }
+    _restoreRetains(devices, storage);
+    runSystem();
+    Future.microtask(() {
+      for (final device in devices.values) {
+        device.execute();
+      }
+    });
   }
 
   void _publishDeviceMeta(Map<String, IDevice> devices) {
