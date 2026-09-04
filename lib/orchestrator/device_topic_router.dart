@@ -77,15 +77,15 @@ class DeviceTopicRouter {
     final route = _routes[topic] ?? _resolveGenericTopic(topic);
 
     if (route == null) {
-      return;
+      return _routeResolvedDep(topic, payload);
     }
-    route.device.updateField(
-      WbMqttMessage(topic: topic, payload: payload),
-    );
+    route.device.updateField(WbMqttMessage(topic: topic, payload: payload));
     if (route.isInput) {
       route.device.execute();
     }
+  }
 
+  void _routeResolvedDep(String topic, String payload) {
     final devices = _dependencies[topic] ?? _resolveGenericTopicForDep(topic);
 
     if (devices == null) {
