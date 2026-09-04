@@ -1,7 +1,7 @@
 import 'package:fake_async/fake_async.dart';
 import 'package:test/test.dart';
-import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
 import 'package:wb_sdk/control/pid_controller.dart';
+import 'package:wb_sdk/control/pid_controller_base.dart';
 import 'package:wb_sdk/orchestrator/wb_orchestrator.dart';
 
 void main() {
@@ -22,17 +22,16 @@ void main() {
       double setpoint = 10,
       String outputTopic = 'dev/test/output',
       Duration autoUpdateDelay = const Duration(seconds: 10),
-      WbMqttMessage Function()? runUpdate,
+      void Function()? runUpdate,
     }) {
       return PidController(
         kp: kp,
         ki: ki,
         kd: kd,
+        mode: PidMode.heater,
         setpoint: setpoint,
         autoUpdateDelay: autoUpdateDelay,
-        runUpdate:
-            runUpdate ??
-            () => WbMqttMessage(topic: outputTopic, payload: '10.0'),
+        runUpdate: runUpdate ?? () => wbPublish(outputTopic, '10.0'),
       );
     }
 
@@ -83,8 +82,7 @@ void main() {
           kd: 0,
           outputTopic: 'dev/test/out',
           autoUpdateDelay: const Duration(seconds: 10),
-          runUpdate: () =>
-              const WbMqttMessage(topic: 'dev/test/out', payload: '10.0'),
+          runUpdate: () => wbPublish('dev/test/out', '10.0'),
         );
 
         pid.calculate(processVariable: 5);

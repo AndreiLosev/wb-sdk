@@ -4,7 +4,13 @@ import 'package:wb_sdk/control/pid_controller_base.dart';
 void main() {
   group('PidControllerBase', () {
     test('P-составляющая пропорциональна ошибке', () {
-      final pid = PidControllerBase(kp: 2, ki: 0, kd: 0, setpoint: 10);
+      final pid = PidControllerBase(
+        kp: 2,
+        ki: 0,
+        kd: 0,
+        mode: PidMode.heater,
+        setpoint: 10,
+      );
 
       final output = pid.update(processVariable: 5, dt: 1);
 
@@ -15,7 +21,13 @@ void main() {
     });
 
     test('I-составляющая накапливается за несколько шагов', () {
-      final pid = PidControllerBase(kp: 0, ki: 1, kd: 0, setpoint: 10);
+      final pid = PidControllerBase(
+        kp: 0,
+        ki: 1,
+        kd: 0,
+        mode: PidMode.heater,
+        setpoint: 10,
+      );
 
       expect(pid.update(processVariable: 0, dt: 1), 10);
       expect(pid.integral, 10);
@@ -26,7 +38,13 @@ void main() {
     });
 
     test('D-составляющая реагирует на изменение измерения', () {
-      final pid = PidControllerBase(kp: 0, ki: 0, kd: 1, setpoint: 10);
+      final pid = PidControllerBase(
+        kp: 0,
+        ki: 0,
+        kd: 1,
+        mode: PidMode.heater,
+        setpoint: 10,
+      );
 
       pid.update(processVariable: 10, dt: 1);
       final output = pid.update(processVariable: 12, dt: 1);
@@ -36,7 +54,13 @@ void main() {
     });
 
     test('смена setpoint не вызывает скачок D-составляющей', () {
-      final pid = PidControllerBase(kp: 0, ki: 0, kd: 1, setpoint: 10);
+      final pid = PidControllerBase(
+        kp: 0,
+        ki: 0,
+        kd: 1,
+        mode: PidMode.heater,
+        setpoint: 10,
+      );
 
       pid.update(processVariable: 10, dt: 1);
       final output = pid.update(
@@ -54,6 +78,7 @@ void main() {
         kp: 10,
         ki: 0,
         kd: 0,
+        mode: PidMode.heater,
         setpoint: 100,
         outputMin: 0,
         outputMax: 50,
@@ -68,6 +93,7 @@ void main() {
         kp: 0,
         ki: 1,
         kd: 0,
+        mode: PidMode.heater,
         setpoint: 100,
         outputMax: 50,
       );
@@ -81,7 +107,13 @@ void main() {
     });
 
     test('reset сбрасывает внутреннее состояние', () {
-      final pid = PidControllerBase(kp: 1, ki: 0, kd: 1, setpoint: 10);
+      final pid = PidControllerBase(
+        kp: 1,
+        ki: 0,
+        kd: 1,
+        mode: PidMode.heater,
+        setpoint: 10,
+      );
 
       pid.update(processVariable: 5, dt: 1);
       pid.reset();
@@ -97,7 +129,12 @@ void main() {
     });
 
     test('dt <= 0 бросает ArgumentError', () {
-      final pid = PidControllerBase(kp: 1, ki: 0, kd: 0);
+      final pid = PidControllerBase(
+        kp: 1,
+        ki: 0,
+        kd: 0,
+        mode: PidMode.heater,
+      );
 
       expect(
         () => pid.update(processVariable: 0, dt: 0),
@@ -115,6 +152,7 @@ void main() {
           kp: 1,
           ki: 0,
           kd: 0,
+          mode: PidMode.heater,
           outputMin: 10,
           outputMax: 5,
         ),

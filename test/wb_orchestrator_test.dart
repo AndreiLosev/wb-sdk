@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:test/test.dart';
 import 'package:wb_sdk/contracts/wb_storage.dart';
 import 'package:wb_sdk/orchestrator/wb_orchestrator.dart';
@@ -70,54 +71,62 @@ void main() {
       expect(deviceB.executeCalls, 1);
     });
 
-    test('prepare публикует meta, восстанавливает retains, вызывает execute и subscribe', () async {
-      final storage = _FakeStorage();
-      storage.put('dev_a.mode', '1');
-      final retainDevice = _TestDevice(
-        name: 'dev_a',
-        inputs: {'temp/on'},
-        outputs: {'lamp/on'},
-        meta: {
-          'lamp': ControlMeta(
-            type: WbControlType.switch_,
-            title: WbLocalizedTitle(en: 'Lamp'),
-          ),
-          'mode': ControlMeta(
-            type: WbControlType.text,
-            title: WbLocalizedTitle(en: 'Mode'),
-          ),
-        },
-        retains: {'mode': '0'},
-      );
-      final mqtt = _FakeWbMqttClient();
-      final orchestrator = WbOrchestrator.assemble(
-        mqtt: mqtt,
-        storage: storage,
-        devices: [retainDevice, deviceB],
-      );
+    test('prepare публикует meta, восстанавливает retains, вызывает execute и subscribe', () {
+      fakeAsync((async) {
+        final storage = _FakeStorage();
+        storage.put('dev_a.mode', '1');
+        final retainDevice = _TestDevice(
+          name: 'dev_a',
+          inputs: {'temp/on'},
+          outputs: {'lamp/on'},
+          meta: {
+            'lamp': ControlMeta(
+              type: WbControlType.switch_,
+              title: WbLocalizedTitle(en: 'Lamp'),
+            ),
+            'mode': ControlMeta(
+              type: WbControlType.text,
+              title: WbLocalizedTitle(en: 'Mode'),
+            ),
+          },
+          retains: {'mode': '0'},
+        );
+        final mqtt = _FakeWbMqttClient();
+        final orchestrator = WbOrchestrator.assemble(
+          mqtt: mqtt,
+          storage: storage,
+          devices: [retainDevice, deviceB],
+        );
 
-      orchestrator.prepare();
+        orchestrator.prepare();
 
-      expect(
-        mqtt.publishedTopics,
-        containsAll([
-          'dev_a/meta',
-          'dev_a/lamp/meta',
-        ]),
-      );
-      expect(mqtt.publishedPayloads, contains(contains('"driver":"vktmotage"')));
-      expect(retainDevice.updateFieldCalls, 1);
-      expect(retainDevice.lastMessage?.topic, 'dev_a/mode/on');
-      expect(retainDevice.lastMessage?.payload, '1');
-      expect(retainDevice.executeCalls, 1);
-      expect(deviceB.executeCalls, 1);
-      expect(mqtt.subscribedTopics, containsAll([
-        'dev_a/temp/on',
-        'dev_a/lamp/on',
-        'dev_b/switch/on',
-        'debug/dev_a',
-        'debug/dev_b',
-      ]));
+        expect(
+          mqtt.publishedTopics,
+          containsAll([
+            'dev_a/meta',
+            'dev_a/lamp/meta',
+          ]),
+        );
+        expect(
+          mqtt.publishedPayloads,
+          contains(contains('"driver":"vktmotage"')),
+        );
+        expect(mqtt.subscribedTopics, containsAll([
+          'dev_a/temp/on',
+          'dev_a/lamp/on',
+          'dev_b/switch/on',
+          'debug/dev_a',
+          'debug/dev_b',
+        ]));
+
+        async.elapse(const Duration(seconds: 1));
+
+        expect(retainDevice.updateFieldCalls, 1);
+        expect(retainDevice.lastMessage?.topic, 'dev_a/mode/on');
+        expect(retainDevice.lastMessage?.payload, '1');
+        expect(retainDevice.executeCalls, 1);
+        expect(deviceB.executeCalls, 1);
+      });
     });
 
     test('prepare бросает StateError если retain без meta', () async {
@@ -132,15 +141,37 @@ void main() {
         devices: [retainDevice],
       );
 
-      expect(() => orchestrator.prepare(), throwsA(isA<StateError>()));
+      final errors = <Object>[];
+      final done = Completer<void>();
+
+      runZonedGuarded(
+        () {
+          orchestrator.prepare();
+          Timer(const Duration(milliseconds: 1100), () {
+            if (!done.isCompleted) {
+              done.complete();
+            }
+          });
+        },
+        (error, stack) {
+          errors.add(error);
+          if (!done.isCompleted) {
+            done.complete();
+          }
+        },
+      );
+
+      await done.future;
+      expect(errors, hasLength(1));
+      expect(errors.first, isA<StateError>());
     });
 
     test('повторный run бросает StateError', () async {
       final runFuture = orchestrator.run();
-      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(const Duration(milliseconds: 1100));
 
-      expect(
-        () => orchestrator.run(),
+      await expectLater(
+        orchestrator.run(),
         throwsA(isA<StateError>()),
       );
 
