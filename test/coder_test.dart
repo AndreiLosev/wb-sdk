@@ -51,6 +51,12 @@ void main() {
         WbValueCodec.decode('3.14', WbControlType.value),
         3.14,
       );
+      expect(WbValueCodec.decodeDoubleValue('23,2'), 23.2);
+      expect(WbValueCodec.decodeDoubleValue('-15,5'), -15.5);
+      expect(
+        WbValueCodec.decode('23,2', WbControlType.value),
+        23.2,
+      );
     });
 
     test('encode/decode для WbControlType.range с int и double', () {

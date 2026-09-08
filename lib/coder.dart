@@ -17,15 +17,18 @@ abstract final class WbValueCodec {
     _ => throw ArgumentError('Invalid num type: ${value.runtimeType}'),
   };
 
-  static num decodeNum(String payload) => num.parse(payload);
+  static num decodeNum(String payload) => num.parse(_normalizeNumPayload(payload));
 
   static int decodeIntValue(String payload) {
-    final value = num.parse(payload);
+    final value = num.parse(_normalizeNumPayload(payload));
     return value is int ? value : value.round();
   }
 
   static double decodeDoubleValue(String payload) =>
-      num.parse(payload).toDouble();
+      num.parse(_normalizeNumPayload(payload)).toDouble();
+
+  static String _normalizeNumPayload(String payload) =>
+      payload.trim().replaceAll(',', '.');
 
   static String encodeString(String value) => value;
 
