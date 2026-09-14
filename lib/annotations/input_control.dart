@@ -18,5 +18,6 @@ class InputControl extends ControlAnnotation {
     super.readonly = false,
     super.hidden = false,
     super.enumTitles,
+    super.reverse = false,
   });
 }

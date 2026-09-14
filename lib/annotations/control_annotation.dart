@@ -16,6 +16,7 @@ class ControlAnnotation {
     this.readonly = false,
     this.hidden = false,
     this.enumTitles,
+    this.reverse = false,
   });
 
   /// Тип контрола (`meta.type`).
@@ -49,4 +50,6 @@ class ControlAnnotation {
 
   /// Заголовки значений enum (`meta.enum`). Для [WbControlType.value] и [WbControlType.text].
   final Map<String, WbLocalizedTitle>? enumTitles;
+
+  final bool reverse;
 }
