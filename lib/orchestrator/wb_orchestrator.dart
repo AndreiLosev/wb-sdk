@@ -180,7 +180,7 @@ class WbOrchestrator {
         _mqtt.publish(
           mappedTopic,
           payload,
-          retained: !mappedTopic.endsWith('on'),
+          retained: !mappedTopic.endsWith('/on'),
         );
       }
     };
