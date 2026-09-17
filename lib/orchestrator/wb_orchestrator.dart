@@ -177,7 +177,11 @@ class WbOrchestrator {
   void _makeWpPublish() {
     wbPublish = (String topic, String payload) {
       for (final mappedTopic in _topicMapping.expandOutputTopics(topic)) {
-        _mqtt.publish(mappedTopic, payload, retained: true);
+        _mqtt.publish(
+          mappedTopic,
+          payload,
+          retained: !mappedTopic.endsWith('on'),
+        );
       }
     };
   }
