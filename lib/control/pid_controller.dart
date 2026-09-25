@@ -15,6 +15,7 @@ class PidController extends PidControllerBase {
     super.setpoint = 0,
     this.runUpdate,
     this.autoUpdateDelay = const Duration(seconds: 5),
+    super.startOffset = 0,
   }) {
     _resetTimer();
   }

@@ -42,6 +42,27 @@ Iterable<String> makeExternalDependencies(
   }
 }
 
+(String? device, String? control, String? addition) splitWbTopic(String topic) {
+  String? device;
+  String? control;
+  String? addition;
+
+  for (final (i, part) in topic.split('/').indexed) {
+    switch (i) {
+      case 0:
+        device = part;
+      case 1:
+        control = part;
+      case 2:
+        addition = part;
+      default:
+        addition = "$addition/$part";
+    }
+  }
+
+  return (device, control, addition);
+}
+
 String _replaceEndOn(String topic) {
   if (topic.endsWith('/on')) {
     return topic.substring(0, topic.length - 3);

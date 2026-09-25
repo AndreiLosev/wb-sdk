@@ -15,7 +15,7 @@ abstract class IDevice {
 
   WbLocalizedTitle? get title;
 
-  void execute();
+  void execute([String? topic]);
 
   Map<String, ControlMeta> meta() => _meta;
 

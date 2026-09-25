@@ -13,6 +13,7 @@ class PidControllerBase {
     this.outputMin,
     this.outputMax,
     this.setpoint = 0,
+    this.startOffset = 0,
   }) {
     if (outputMin != null && outputMax != null && outputMin! > outputMax!) {
       throw ArgumentError.value(
@@ -37,6 +38,8 @@ class PidControllerBase {
   double _pTerm = 0;
   double _iTerm = 0;
   double _dTerm = 0;
+
+  double startOffset;
 
   PidMode mode;
 
@@ -86,7 +89,7 @@ class PidControllerBase {
       _dTerm = -kd * (processVariable - _lastPv!) / dt;
     }
 
-    final rawOutput = _pTerm + _iTerm + _dTerm;
+    final rawOutput = startOffset + _pTerm + _iTerm + _dTerm;
     final output = WbNumericBounds.normalizeDouble(
       rawOutput,
       min: outputMin,
