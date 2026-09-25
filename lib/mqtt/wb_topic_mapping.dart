@@ -11,9 +11,11 @@ typedef IoMappingTopic = ({bool isInput, String key});
 /// [inputs] — входящие алиасы: сообщение на ключ обрабатывается как на значения.
 /// [outputs] — исходящие алиасы: публикация в ключ дублируется в значения.
 class WbTopicMapping {
-  WbTopicMapping({Map<String, Set<String>>? inputs, Map<String, Set<String>>? outputs})
-    : inputs = _copyMapOfSets(inputs),
-      outputs = _copyMapOfSets(outputs);
+  WbTopicMapping({
+    Map<String, Set<String>>? inputs,
+    Map<String, Set<String>>? outputs,
+  }) : inputs = _copyMapOfSets(inputs),
+       outputs = _copyMapOfSets(outputs);
 
   static const inputsStorageKey = 'io_mapping_inputs';
   static const outputsStorageKey = 'io_mapping_outputs';
@@ -150,7 +152,9 @@ class WbTopicMapping {
 
   static String _outputTopic(String key) => '$_outputsPrefix$key';
 
-  static Map<String, Set<String>> _copyMapOfSets(Map<String, Set<String>>? source) {
+  static Map<String, Set<String>> _copyMapOfSets(
+    Map<String, Set<String>>? source,
+  ) {
     if (source == null) {
       return {};
     }
@@ -161,7 +165,9 @@ class WbTopicMapping {
     return {for (final entry in map.entries) entry.key: entry.value.toList()};
   }
 
-  static Map<String, Set<String>> _loadMapFromStorage(Map<dynamic, dynamic> stored) {
+  static Map<String, Set<String>> _loadMapFromStorage(
+    Map<dynamic, dynamic> stored,
+  ) {
     final result = <String, Set<String>>{};
     for (final entry in stored.entries) {
       final key = entry.key as String;
