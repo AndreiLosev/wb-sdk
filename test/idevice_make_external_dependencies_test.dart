@@ -2,7 +2,7 @@ import 'package:test/test.dart';
 import 'package:wb_sdk/wb_sdk.dart';
 
 void main() {
-  group('IDevice.makeExternalDependencies', () {
+  group('makeExternalDependencies', () {
     test('по умолчанию только outputs', () {
       final dev = _TestDevice(
         name: 'dev_a',
@@ -10,8 +10,8 @@ void main() {
       );
 
       expect(
-        IDevice.makeExternalDependencies([dev]),
-        ['dev_a/temp/on'],
+        makeExternalDependencies([dev]),
+        ['dev_a/temp'],
       );
     });
 
@@ -27,29 +27,29 @@ void main() {
       );
 
       expect(
-        IDevice.makeExternalDependencies(
+        makeExternalDependencies(
           [dev],
-          DependenciesType.values,
+          types: DependenciesType.values,
         ).toSet(),
         {
-          'dev_a/in/on',
-          'dev_a/out/on',
-          'sensor/x/on',
+          'dev_a/in',
+          'dev_a/out',
+          'sensor/x',
           'dev_a/meta',
           'dev_a/temp/meta',
         },
       );
     });
 
-    test('wildcard в outputs получает префикс устройства', () {
+    test('контролы с суффиксом /meta не попадают в outputs', () {
       final dev = _TestDevice(
         name: 'dev_a',
-        outputs: {'+/meta'},
+        outputs: {'+/meta', 'temp/on'},
       );
 
       expect(
-        IDevice.makeExternalDependencies([dev]),
-        ['dev_a/+/meta'],
+        makeExternalDependencies([dev]),
+        ['dev_a/temp'],
       );
     });
 
@@ -58,8 +58,8 @@ void main() {
       final b = _TestDevice(name: 'dev_b', outputs: {'y/on'});
 
       expect(
-        IDevice.makeExternalDependencies([a, b]).toSet(),
-        {'dev_a/x/on', 'dev_b/y/on'},
+        makeExternalDependencies([a, b]).toSet(),
+        {'dev_a/x', 'dev_b/y'},
       );
     });
   });
@@ -90,7 +90,7 @@ final class _TestDevice extends IDevice {
   final WbLocalizedTitle? title = null;
 
   @override
-  void execute() {}
+  void execute([String? topic]) {}
 }
 
 final class _TestDevicePart extends PartOfIDevice {

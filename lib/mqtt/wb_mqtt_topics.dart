@@ -8,6 +8,12 @@ abstract final class WbMqttTopics {
 
   static final _externalPrefixes = <String>{};
 
+  /// Глобальные подписки на meta/error всех устройств и контролов.
+  static const errorSubscriptionTopics = [
+    '+/+/meta/error',
+    '+/meta/error',
+  ];
+
   /// Регистрирует префиксы внешних сервисов для passthrough-маппинга.
   static void registerExternalPrefixes(Iterable<String> prefixes) {
     _externalPrefixes
@@ -27,12 +33,27 @@ abstract final class WbMqttTopics {
       return '/$shortTopic';
     }
 
+    if (shortTopic == errorSubscriptionTopics[0]) {
+      return '/devices/+/controls/+/meta/error';
+    }
+    if (shortTopic == errorSubscriptionTopics[1]) {
+      return '/devices/+/meta/error';
+    }
+
     final parts = shortTopic.split('/');
     if (parts.length < 2) {
       throw ArgumentError.value(shortTopic, 'shortTopic', 'Invalid short topic');
     }
 
     final device = parts[0];
+
+    if (parts.length == 4 && parts[2] == 'meta' && parts[3] == 'error') {
+      return '$_devicesPrefix$device/controls/${parts[1]}/meta/error';
+    }
+
+    if (parts.length == 3 && parts[1] == 'meta' && parts[2] == 'error') {
+      return '$_devicesPrefix$device/meta/error';
+    }
 
     if (parts.length == 2 && parts[1] == 'meta') {
       return '$_devicesPrefix$device/meta';
@@ -70,6 +91,17 @@ abstract final class WbMqttTopics {
 
     final rest = brokerTopic.substring(_devicesPrefix.length);
     final parts = rest.split('/');
+
+    if (parts.length == 5 &&
+        parts[1] == 'controls' &&
+        parts[3] == 'meta' &&
+        parts[4] == 'error') {
+      return '${parts[0]}/${parts[2]}/meta/error';
+    }
+
+    if (parts.length == 3 && parts[1] == 'meta' && parts[2] == 'error') {
+      return '${parts[0]}/meta/error';
+    }
 
     if (parts.length == 2 && parts[1] == 'meta') {
       return '${parts[0]}/meta';

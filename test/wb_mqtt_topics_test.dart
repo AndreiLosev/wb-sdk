@@ -42,6 +42,31 @@ void main() {
       );
     });
 
+    test('meta/error устройства', () {
+      expect(
+        WbMqttTopics.toBrokerTopic('room_light/meta/error'),
+        '/devices/room_light/meta/error',
+      );
+    });
+
+    test('meta/error контрола', () {
+      expect(
+        WbMqttTopics.toBrokerTopic('room_light/lamp/meta/error'),
+        '/devices/room_light/controls/lamp/meta/error',
+      );
+    });
+
+    test('wildcard meta/error подписки', () {
+      expect(
+        WbMqttTopics.toBrokerTopic('+/+/meta/error'),
+        '/devices/+/controls/+/meta/error',
+      );
+      expect(
+        WbMqttTopics.toBrokerTopic('+/meta/error'),
+        '/devices/+/meta/error',
+      );
+    });
+
     test('value топик контрола', () {
       expect(
         WbMqttTopics.toBrokerTopic('test-dev/temperature'),
@@ -99,6 +124,8 @@ void main() {
       final topics = [
         'room_light/meta',
         'room_light/lamp/meta',
+        'room_light/meta/error',
+        'room_light/lamp/meta/error',
         'room_light/lamp/on',
         'test-dev/temperature',
         'io_mapping/inputs/alias/temp/on',

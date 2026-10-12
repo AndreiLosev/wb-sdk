@@ -220,6 +220,62 @@ void main() {
       expect(mqtt.subscribedTopics, contains('alias/temp/on'));
     });
 
+    test('prepare подписывается на meta/error wildcards', () {
+      orchestrator.prepare();
+
+      expect(
+        mqtt.subscribedTopics,
+        containsAll(WbMqttTopics.errorSubscriptionTopics),
+      );
+    });
+
+    test('meta/error input-алиаса пересылается на canonical value', () {
+      orchestrator.handleMessage(
+        const WbMqttMessage(
+          topic: 'alias/temp/meta/error',
+          payload: '{"error":"sensor"}',
+        ),
+      );
+
+      expect(mqtt.publishedTopics, ['dev_a/temp/meta/error']);
+      expect(mqtt.publishedPayloads, ['{"error":"sensor"}']);
+      expect(deviceA.updateFieldCalls, 0);
+    });
+
+    test('meta/error output-алиаса пересылается на canonical key', () {
+      orchestrator.handleMessage(
+        const WbMqttMessage(
+          topic: 'alias/lamp/meta/error',
+          payload: '{"error":"lamp"}',
+        ),
+      );
+
+      expect(mqtt.publishedTopics, ['dev_a/lamp/meta/error']);
+      expect(mqtt.publishedPayloads, ['{"error":"lamp"}']);
+    });
+
+    test('canonical meta/error не пересылается', () {
+      orchestrator.handleMessage(
+        const WbMqttMessage(
+          topic: 'dev_a/temp/meta/error',
+          payload: '{}',
+        ),
+      );
+
+      expect(mqtt.publishedTopics, isEmpty);
+    });
+
+    test('device meta/error алиаса пересылается на canonical device', () {
+      orchestrator.handleMessage(
+        const WbMqttMessage(
+          topic: 'alias/meta/error',
+          payload: '{"error":"device"}',
+        ),
+      );
+
+      expect(mqtt.publishedTopics, contains('dev_a/meta/error'));
+    });
+
     test('публикация в канонический output-топик дублируется в алиас', () {
       wbPublish('dev_a/lamp/on', '1');
 
@@ -482,7 +538,7 @@ final class _TestDevice extends IDevice {
   WbMqttMessage? lastMessage;
 
   @override
-  void execute() {
+  void execute([String? topic]) {
     executeCalls++;
   }
 

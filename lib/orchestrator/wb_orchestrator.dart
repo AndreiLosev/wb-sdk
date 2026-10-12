@@ -163,7 +163,30 @@ class WbOrchestrator {
       return;
     }
 
+    if (_forwardMetaError(message)) {
+      return;
+    }
+
     _router.route(message, _topicMapping);
+  }
+
+  bool _forwardMetaError(WbMqttMessage message) {
+    if (!message.topic.endsWith('meta/error')) {
+      return false;
+    }
+
+    final targets = {
+      ..._topicMapping.forwardInputError(message.topic),
+      ..._topicMapping.forwardOutputError(message.topic),
+    };
+    if (targets.isEmpty) {
+      return false;
+    }
+
+    for (final target in targets) {
+      _mqtt.publish(target, message.payload, retained: true);
+    }
+    return true;
   }
 
   void _handleDebugMessage(WbMqttMessage message) {

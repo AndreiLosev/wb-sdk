@@ -66,6 +66,77 @@ void main() {
     });
   });
 
+  group('WbTopicMapping.forwardInputError', () {
+    test('control error алиаса → canonical values', () {
+      expect(
+        mapping.forwardInputError('alias/temp/meta/error'),
+        ['dev_a/temp/meta/error'],
+      );
+    });
+
+    test('device error алиаса → device error values', () {
+      expect(
+        mapping.forwardInputError('alias/meta/error'),
+        ['dev_a/meta/error'],
+      );
+    });
+
+    test('несколько canonical values', () {
+      final multi = WbTopicMapping(
+        inputs: {
+          'alias/temp/on': {'dev_a/temp/on', 'dev_b/temp/on'},
+        },
+      );
+
+      expect(
+        multi.forwardInputError('alias/temp/meta/error'),
+        containsAll(['dev_a/temp/meta/error', 'dev_b/temp/meta/error']),
+      );
+    });
+
+    test('canonical error → пусто', () {
+      expect(mapping.forwardInputError('dev_a/temp/meta/error'), isEmpty);
+    });
+
+    test('неизвестный топик → пусто', () {
+      expect(mapping.forwardInputError('alias/temp/on'), isEmpty);
+    });
+  });
+
+  group('WbTopicMapping.forwardOutputError', () {
+    test('control error алиаса → canonical key', () {
+      expect(
+        mapping.forwardOutputError('alias/lamp/meta/error'),
+        ['dev_a/lamp/meta/error'],
+      );
+    });
+
+    test('device error алиаса → device error key', () {
+      expect(
+        mapping.forwardOutputError('alias/meta/error'),
+        ['dev_a/meta/error'],
+      );
+    });
+
+    test('несколько keys с одним value', () {
+      final multi = WbTopicMapping(
+        outputs: {
+          'dev_a/lamp/on': {'alias/lamp/on'},
+          'dev_b/lamp/on': {'alias/lamp/on'},
+        },
+      );
+
+      expect(
+        multi.forwardOutputError('alias/lamp/meta/error'),
+        containsAll(['dev_a/lamp/meta/error', 'dev_b/lamp/meta/error']),
+      );
+    });
+
+    test('canonical error → пусто', () {
+      expect(mapping.forwardOutputError('dev_a/lamp/meta/error'), isEmpty);
+    });
+  });
+
   group('WbTopicMapping.inputSubscriptionTopics', () {
     test('возвращает ключи inputs', () {
       expect(mapping.inputSubscriptionTopics, ['alias/temp/on']);

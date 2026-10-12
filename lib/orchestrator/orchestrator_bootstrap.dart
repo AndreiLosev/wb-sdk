@@ -5,6 +5,7 @@ import 'package:wb_sdk/contracts/idevice.dart';
 import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
 import 'package:wb_sdk/contracts/wb_storage.dart';
 import 'package:wb_sdk/debug/wb_debug_log.dart';
+import 'package:wb_sdk/mqtt/wb_mqtt_topics.dart';
 import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
 import 'package:wb_sdk/wb_meta_json.dart';
 
@@ -39,6 +40,9 @@ class OrchestratorBootstrap {
       mqtt.subscribe(topic);
     }
     for (final topic in externalSubscriptionTopics) {
+      mqtt.subscribe(topic);
+    }
+    for (final topic in WbMqttTopics.errorSubscriptionTopics) {
       mqtt.subscribe(topic);
     }
 

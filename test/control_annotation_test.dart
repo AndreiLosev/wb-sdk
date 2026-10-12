@@ -241,7 +241,7 @@ final class _RoomLight extends IDevice {
   final String mode = '0';
 
   @override
-  void execute() {}
+  void execute([String? topic]) {}
 }
 
 final class _RoomLightPart extends PartOfIDevice {}

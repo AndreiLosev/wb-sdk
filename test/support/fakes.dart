@@ -44,7 +44,7 @@ class FakeDevice extends IDevice {
   int executeCalls = 0;
 
   @override
-  void execute() {
+  void execute([String? topic]) {
     executeCalls++;
   }
 

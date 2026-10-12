@@ -148,6 +148,72 @@ class WbTopicMapping {
   /// Дополнительные топики для подписки (ключи [inputs]).
   Iterable<String> get inputSubscriptionTopics => inputs.keys;
 
+  /// Пересылает meta/error с input-ключа (алиаса) на error-топики [inputs] values.
+  Iterable<String> forwardInputError(String errorTopic) {
+    final parsed = _parseMetaErrorTopic(errorTopic);
+    if (parsed == null) {
+      return const [];
+    }
+
+    final targets = <String>{};
+
+    if (parsed.isDeviceLevel) {
+      for (final entry in inputs.entries) {
+        if (_deviceFromMappingTopic(entry.key) != parsed.device) {
+          continue;
+        }
+        for (final value in entry.value) {
+          targets.add(_deviceMetaError(_deviceFromMappingTopic(value)));
+        }
+      }
+      return targets;
+    }
+
+    for (final entry in inputs.entries) {
+      if (_controlBase(entry.key) != parsed.controlBase) {
+        continue;
+      }
+      for (final value in entry.value) {
+        targets.add(_controlMetaError(_controlBase(value)));
+      }
+    }
+
+    return targets;
+  }
+
+  /// Пересылает meta/error со значения output-алиаса на error-топики ключей [outputs].
+  Iterable<String> forwardOutputError(String errorTopic) {
+    final parsed = _parseMetaErrorTopic(errorTopic);
+    if (parsed == null) {
+      return const [];
+    }
+
+    final targets = <String>{};
+
+    if (parsed.isDeviceLevel) {
+      for (final entry in outputs.entries) {
+        for (final value in entry.value) {
+          if (_deviceFromMappingTopic(value) != parsed.device) {
+            continue;
+          }
+          targets.add(_deviceMetaError(_deviceFromMappingTopic(entry.key)));
+        }
+      }
+      return targets;
+    }
+
+    for (final entry in outputs.entries) {
+      for (final value in entry.value) {
+        if (_controlBase(value) != parsed.controlBase) {
+          continue;
+        }
+        targets.add(_controlMetaError(_controlBase(entry.key)));
+      }
+    }
+
+    return targets;
+  }
+
   static String _inputTopic(String key) => '$_inputsPrefix$key';
 
   static String _outputTopic(String key) => '$_outputsPrefix$key';
@@ -195,5 +261,44 @@ class WbTopicMapping {
 
   static bool _setsEqual(Set<String> a, Set<String> b) {
     return a.length == b.length && a.containsAll(b);
+  }
+
+  static String _controlBase(String mappingTopic) {
+    if (mappingTopic.endsWith('/on')) {
+      return mappingTopic.substring(0, mappingTopic.length - 3);
+    }
+    return mappingTopic;
+  }
+
+  static String _controlMetaError(String controlBase) => '$controlBase/meta/error';
+
+  static String _deviceMetaError(String device) => '$device/meta/error';
+
+  static String _deviceFromMappingTopic(String topic) => topic.split('/').first;
+
+  static ({String device, String? controlBase, bool isDeviceLevel})?
+  _parseMetaErrorTopic(String errorTopic) {
+    if (!errorTopic.endsWith('/meta/error')) {
+      return null;
+    }
+
+    final parts = errorTopic.split('/');
+    if (parts.length == 3 && parts[1] == 'meta' && parts[2] == 'error') {
+      return (device: parts[0], controlBase: null, isDeviceLevel: true);
+    }
+
+    if (parts.length == 4 &&
+        parts[2] == 'meta' &&
+        parts[3] == 'error' &&
+        parts[0].isNotEmpty &&
+        parts[1].isNotEmpty) {
+      return (
+        device: parts[0],
+        controlBase: '${parts[0]}/${parts[1]}',
+        isDeviceLevel: false,
+      );
+    }
+
+    return null;
   }
 }
