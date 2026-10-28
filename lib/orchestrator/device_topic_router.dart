@@ -1,6 +1,5 @@
 import 'package:wb_sdk/contracts/idevice.dart';
 import 'package:wb_sdk/contracts/wb_mqtt_client.dart';
-import 'package:wb_sdk/helpers.dart';
 import 'package:wb_sdk/mqtt/wb_topic_mapping.dart';
 
 class TopicRoute {
